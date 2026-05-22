@@ -112,12 +112,33 @@ WHAT TO CUT — ruthlessly (do not include these):
 - Anything you've already covered — no duplicate stories
 - Anything with a relevanceScore below 35 — just skip it entirely
 ${preferenceBlock}
-WRITING STYLE — this is important:
-- Write like you're telling Wout over morning coffee, not writing a corporate report
-- Headlines: direct and punchy, 6-10 words — tell the news, don't tease it
-- Summaries: 2-3 plain sentences. Start with what happened, then why it's interesting. No jargon unless it's necessary, and if it is, briefly explain it. Never start with "This" or a company name — lead with the news.
-- Takeaways: 1-3 bullets per story. Write them as plain, easy-to-understand sentences anyone could follow — not insider jargon. Each should answer "okay, so what does this actually mean?" Max 20 words. Conversational, not corporate.
-- Friendly but not fluffy. Informative but not dry. Smart but not condescending.
+WRITING STYLE — read this carefully, it is the most important instruction:
+
+Wout reads this in bed on his phone first thing in the morning. His brain is not fully on yet. Write accordingly.
+
+GOLDEN RULE: If a sentence takes more than 5 seconds to read, rewrite it. Short sentences only. One idea per sentence. No semicolons. No em dashes mid-sentence. No jargon.
+
+Headlines:
+- Tell the whole story in 6-8 words. No teasing, no clickbait. Just the news.
+- Bad: "A new development in the AI space raises questions"
+- Good: "OpenAI launches an AI that writes code for you"
+
+Summaries — MAXIMUM 2 SHORT SENTENCES:
+- Sentence 1: What happened? Plain and direct.
+- Sentence 2: Why is it interesting or different?
+- Use words a smart 16-year-old would understand. If you need a technical term, explain it in the same sentence.
+- Never start with "This", "The", or a company name. Lead with the news itself.
+- Bad: "Anthropic has released Claude 3.7 Sonnet, a new model that demonstrates enhanced reasoning capabilities across multiple domains, signaling a continued push toward more capable AI systems."
+- Good: "Anthropic released a smarter version of its AI assistant Claude. It's noticeably better at figuring out complex problems step by step."
+
+Takeaways — treat these like a text from a smart friend:
+- 1-3 bullets max. Each one under 15 words.
+- Answer "so what?" in plain language. No insider language.
+- Bad: "This represents a paradigm shift in GTM motion architecture"
+- Good: "Sales teams that don't adopt AI tools will fall behind fast"
+- Each bullet should be something Wout can remember 10 minutes after reading it.
+
+Intro: Casual, warm, 1-2 short sentences. Like a friend texting before a meeting.
 
 SECTION TYPES:
 - top_stories: The 3-5 most important and relevant stories today, ranked by significance to Wout
@@ -130,10 +151,10 @@ SECTION TYPES:
 - how_i_ai: SPECIAL — only use this if Lenny's Newsletter contains a "How I AI" feature. Extract that specific feature as a single story. The headline should be the person's name and role (e.g. "Sarah Chen, Head of Growth at Acme"). The summary should explain what they shared about using AI. The takeaways should be their 1-3 most useful AI tips or habits. If there is no "How I AI" feature in Lenny's Newsletter today, do not create a how_i_ai story.
 
 For each story output:
-- headline: 6-10 words, punchy, tells the news directly
-- summary: 2-3 sentences in plain conversational English — what happened and why it's interesting
-- whyItMatters: 1 sentence — so what? Why does this matter to Wout specifically?
-- takeaways: array of 1-3 short bullet strings (max 20 words each) — practical, sharp, action-oriented
+- headline: 6-8 words, tells the full story directly — no teasing
+- summary: EXACTLY 2 short sentences. Plain language only. Max 30 words total.
+- whyItMatters: 1 short sentence — "so what?" in plain language, under 15 words
+- takeaways: 1-3 bullets, each under 15 words, plain conversational language
 - sourceUrl: the most relevant URL mentioned in the content, or null
 - sourceName: the newsletter or publication name (short form, e.g. "Lenny's Newsletter" not the full email)
 - relevanceScore: 1-100 based on how relevant and important this is to Wout's world. Only include stories scoring 35+.
