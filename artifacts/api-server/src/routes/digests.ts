@@ -124,6 +124,8 @@ router.post("/generate", async (req, res) => {
   try {
     const output = await processEmailsIntoDigest(emailContent, feedback);
 
+    await db.update(digestsTable).set({ intro: output.intro || null }).where(eq(digestsTable.id, digest!.id));
+
     for (let i = 0; i < output.sections.length; i++) {
       const section = output.sections[i]!;
       if (section.stories.length === 0) continue;
@@ -217,6 +219,7 @@ async function buildFullDigest(digestId: number) {
     date: digest.date,
     status: digest.status,
     storyCount,
+    intro: digest.intro ?? null,
     createdAt: digest.createdAt.toISOString(),
     sections: fullSections,
   };

@@ -79,14 +79,22 @@ export default function DigestView() {
               style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
               Wout's Daily Digest
             </h1>
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 font-sans text-[11px] uppercase tracking-widest text-muted-foreground border-t border-border pt-2">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 font-sans text-[11px] uppercase tracking-widest text-muted-foreground border-t border-border pt-2 mb-3">
               <span>{format(new Date(digest.date), "EEEE, MMMM d, yyyy")}</span>
               <span>·</span>
               <span>{digest.storyCount} Stories</span>
             </div>
-            {/* Preference note */}
-            <p className="mt-2 text-[11px] font-sans text-muted-foreground italic">
-              👍 / 👎 each story — your ratings shape tomorrow's edition.
+            {/* Good morning intro */}
+            {digest.intro && (
+              <p
+                className="text-base italic text-foreground/75 leading-relaxed"
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+              >
+                {digest.intro}
+              </p>
+            )}
+            <p className="mt-2 text-[10px] font-sans text-muted-foreground/70">
+              👍 / 👎 each story to tune tomorrow's edition
             </p>
           </div>
         </div>

@@ -94,6 +94,8 @@ export interface Digest {
   date: string;
   status: string;
   storyCount: number;
+  /** @nullable */
+  intro?: string | null;
   createdAt: string;
   sections: DigestSection[];
 }

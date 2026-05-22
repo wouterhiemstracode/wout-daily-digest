@@ -6,6 +6,7 @@ export const digestsTable = pgTable("digests", {
   id: serial("id").primaryKey(),
   date: date("date").notNull(),
   status: text("status").notNull().default("draft"), // draft | ready
+  intro: text("intro"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

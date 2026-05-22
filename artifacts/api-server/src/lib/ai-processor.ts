@@ -23,6 +23,7 @@ export interface ProcessedStory {
 }
 
 export interface DigestOutput {
+  intro: string;
   sections: {
     type: "top_stories" | "funding_ipos" | "ai_software" | "trends" | "takeaways" | "watch" | "links";
     title: string;
@@ -54,7 +55,7 @@ export async function processEmailsIntoDigest(
   feedback?: FeedbackContext
 ): Promise<DigestOutput> {
   if (emails.length === 0) {
-    return { sections: buildEmptySections() };
+    return buildEmptySections();
   }
 
   const emailSummaries = emails.map((e, i) => {
@@ -115,7 +116,7 @@ WRITING STYLE — this is important:
 - Write like you're telling Wout over morning coffee, not writing a corporate report
 - Headlines: direct and punchy, 6-10 words — tell the news, don't tease it
 - Summaries: 2-3 plain sentences. Start with what happened, then why it's interesting. No jargon unless it's necessary, and if it is, briefly explain it. Never start with "This" or a company name — lead with the news.
-- Takeaways: 1-3 short, sharp bullets. Each one should be a genuinely useful thought Wout can carry into his day. Max 20 words each. Start each with an action verb or concrete observation.
+- Takeaways: 1-3 bullets per story. Write them as plain, easy-to-understand sentences anyone could follow — not insider jargon. Each should answer "okay, so what does this actually mean?" Max 20 words. Conversational, not corporate.
 - Friendly but not fluffy. Informative but not dry. Smart but not condescending.
 
 SECTION TYPES:
@@ -137,8 +138,11 @@ For each story output:
 - relevanceScore: 1-100 based on how relevant and important this is to Wout's world. Only include stories scoring 35+.
 - section: one of the section types above
 
+Also generate a short "intro" field: a warm, friendly 1-2 sentence good morning note. Mention roughly how many stories there are and what the main themes are today. Keep it light and human — like a colleague poking their head in before a meeting. Example tone: "Good morning! Busy one today — 9 stories, mostly AI tooling and a couple of interesting funding rounds."
+
 Return ONLY valid JSON:
 {
+  "intro": "string",
   "stories": [
     {
       "headline": "string",
@@ -156,6 +160,7 @@ Return ONLY valid JSON:
   const userPrompt = `Process the following newsletters and extract the highest-signal stories:\n\n${combined}`;
 
   let stories: ProcessedStory[] = [];
+  let intro = "";
 
   try {
     const response = await openai.chat.completions.create({
@@ -169,7 +174,8 @@ Return ONLY valid JSON:
     });
 
     const content = response.choices[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(content) as { stories?: ProcessedStory[] };
+    const parsed = JSON.parse(content) as { intro?: string; stories?: ProcessedStory[] };
+    intro = parsed.intro ?? "";
     stories = (parsed.stories ?? []).map((s) => ({
       ...s,
       takeaways: Array.isArray(s.takeaways) ? s.takeaways : [],
@@ -179,10 +185,10 @@ Return ONLY valid JSON:
     stories = [];
   }
 
-  return buildDigestFromStories(stories);
+  return buildDigestFromStories(stories, intro);
 }
 
-function buildDigestFromStories(stories: ProcessedStory[]): DigestOutput {
+function buildDigestFromStories(stories: ProcessedStory[], intro = ""): DigestOutput {
   const sectionDefs = [
     { type: "top_stories" as const, title: "Top Stories" },
     { type: "funding_ipos" as const, title: "Funding Rounds & IPOs" },
@@ -207,10 +213,14 @@ function buildDigestFromStories(stories: ProcessedStory[]): DigestOutput {
     return { type: def.type, title: def.title, stories: sectionStories };
   });
 
-  return { sections };
+  return { intro, sections };
 }
 
-function buildEmptySections(): DigestOutput["sections"] {
+function buildEmptySections(): DigestOutput {
+  return { intro: "", sections: buildEmptySectionList() };
+}
+
+function buildEmptySectionList(): DigestOutput["sections"] {
   return [
     { type: "top_stories", title: "Top Stories", stories: [] },
     { type: "funding_ipos", title: "Funding Rounds & IPOs", stories: [] },

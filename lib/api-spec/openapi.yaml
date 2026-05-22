@@ -442,6 +442,8 @@ components:
           type: string
         storyCount:
           type: integer
+        intro:
+          type: ["string", "null"]
         createdAt:
           type: string
         sections:

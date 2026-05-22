@@ -141,6 +141,7 @@ export const GenerateDigestResponse = zod.object({
   "date": zod.string(),
   "status": zod.string(),
   "storyCount": zod.number(),
+  "intro": zod.string().nullish(),
   "createdAt": zod.string(),
   "sections": zod.array(zod.object({
   "id": zod.number(),
@@ -173,6 +174,7 @@ export const GetLatestDigestResponse = zod.object({
   "date": zod.string(),
   "status": zod.string(),
   "storyCount": zod.number(),
+  "intro": zod.string().nullish(),
   "createdAt": zod.string(),
   "sections": zod.array(zod.object({
   "id": zod.number(),
@@ -209,6 +211,7 @@ export const GetDigestResponse = zod.object({
   "date": zod.string(),
   "status": zod.string(),
   "storyCount": zod.number(),
+  "intro": zod.string().nullish(),
   "createdAt": zod.string(),
   "sections": zod.array(zod.object({
   "id": zod.number(),
