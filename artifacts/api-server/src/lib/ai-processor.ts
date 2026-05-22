@@ -1,5 +1,4 @@
 import { openai } from "@workspace/integrations-openai-ai-server";
-import { batchProcess } from "@workspace/integrations-openai-ai-server/batch";
 import { parse } from "node-html-parser";
 import { logger } from "./logger";
 
@@ -16,6 +15,7 @@ export interface ProcessedStory {
   headline: string;
   summary: string;
   whyItMatters: string;
+  takeaways: string[];
   sourceUrl: string | null;
   sourceName: string | null;
   relevanceScore: number;
@@ -28,6 +28,11 @@ export interface DigestOutput {
     title: string;
     stories: ProcessedStory[];
   }[];
+}
+
+export interface FeedbackContext {
+  likedTopics: string[];
+  dislikedTopics: string[];
 }
 
 function stripHtml(html: string): string {
@@ -44,12 +49,14 @@ function truncate(text: string, maxChars: number): string {
   return text.slice(0, maxChars) + "...";
 }
 
-export async function processEmailsIntoDigest(emails: EmailContent[]): Promise<DigestOutput> {
+export async function processEmailsIntoDigest(
+  emails: EmailContent[],
+  feedback?: FeedbackContext
+): Promise<DigestOutput> {
   if (emails.length === 0) {
     return { sections: buildEmptySections() };
   }
 
-  // Build combined email content for the AI
   const emailSummaries = emails.map((e, i) => {
     const text = e.bodyText
       ? truncate(e.bodyText, 3000)
@@ -64,9 +71,19 @@ ${text}`;
 
   const combined = emailSummaries.join("\n\n");
 
-  const systemPrompt = `You are an elite intelligence analyst specializing in tech, startups, AI, and business. 
-Your job is to process multiple newsletter emails and extract only the highest-signal information, then organize it into a structured daily briefing.
+  let preferenceBlock = "";
+  if (feedback && (feedback.likedTopics.length > 0 || feedback.dislikedTopics.length > 0)) {
+    preferenceBlock = `
+USER PREFERENCES (learned from past feedback — weight these when selecting and scoring stories):
+- Topics the user has liked before: ${feedback.likedTopics.length > 0 ? feedback.likedTopics.join(", ") : "none yet"}
+- Topics the user has disliked or found irrelevant: ${feedback.dislikedTopics.length > 0 ? feedback.dislikedTopics.join(", ") : "none yet"}
+Boost relevanceScore for liked topics; reduce for disliked ones.
+`;
+  }
 
+  const systemPrompt = `You are an elite intelligence analyst specializing in tech, startups, AI, and business.
+Your job is to process multiple newsletter emails and extract only the highest-signal information, then organize it into a structured daily briefing.
+${preferenceBlock}
 PRIORITIES (extract these):
 - Startup funding rounds (all sizes)
 - IPO announcements and preparations
@@ -78,20 +95,14 @@ PRIORITIES (extract these):
 - Automation workflows and productivity tools
 - Startup ecosystem trends
 - Business and technology trends
-- Global news relevant to tech/business
 
 DEPRIORITIZE (skip or minimize):
 - Sponsored content and ads
 - Referral programs and promotional offers
-- Generic newsletter intros/outros and "About us" sections
+- Generic newsletter intros/outros
 - Unsubscribe links and footer sections
-- Creator economy content
-- E-commerce content
-- Generic market commentary without specific signal
-- Generic investing advice
-- Political commentary without clear tech/business relevance
-- Self-promotional content
 - Duplicate stories already covered in a previous item
+- Generic market commentary without specific signal
 
 SECTION TYPES:
 - top_stories: The 3-5 most important stories of the day, ranked by significance
@@ -103,9 +114,10 @@ SECTION TYPES:
 - links: Useful resources, tools, or articles worth bookmarking
 
 For each story, provide:
-- headline: 5-10 words, punchy
-- summary: 2-4 sentences of clear, dense information
-- whyItMatters: 1-2 sentences explaining the significance
+- headline: 5-10 words, punchy newspaper-style
+- summary: 1-2 sentences in plain English — explain what this is about as if telling a smart friend
+- whyItMatters: 1 sentence on the significance
+- takeaways: array of 1-3 short bullet strings (each max 15 words) — the key things to take away
 - sourceUrl: URL if clearly mentioned in the content, otherwise null
 - sourceName: Publication or newsletter name
 - relevanceScore: 1-100 (100 = critical, must-know; 50 = interesting; 1 = marginal)
@@ -118,6 +130,7 @@ Return ONLY valid JSON matching this exact schema:
       "headline": "string",
       "summary": "string",
       "whyItMatters": "string",
+      "takeaways": ["string", "string"],
       "sourceUrl": "string or null",
       "sourceName": "string or null",
       "relevanceScore": number,
@@ -143,7 +156,10 @@ Return ONLY valid JSON matching this exact schema:
 
     const content = response.choices[0]?.message?.content ?? "{}";
     const parsed = JSON.parse(content) as { stories?: ProcessedStory[] };
-    stories = parsed.stories ?? [];
+    stories = (parsed.stories ?? []).map((s) => ({
+      ...s,
+      takeaways: Array.isArray(s.takeaways) ? s.takeaways : [],
+    }));
   } catch (err) {
     logger.error({ err }, "AI processing failed");
     stories = [];
@@ -163,9 +179,7 @@ function buildDigestFromStories(stories: ProcessedStory[]): DigestOutput {
     { type: "links" as const, title: "Useful Links" },
   ];
 
-  // Assign top stories: top 5 by relevance score across all sections
   const sortedAll = [...stories].sort((a, b) => b.relevanceScore - a.relevanceScore);
-  const topStoryIds = new Set(sortedAll.slice(0, 5).map((s, i) => i));
 
   const sections = sectionDefs.map((def) => {
     let sectionStories: ProcessedStory[];

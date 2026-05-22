@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, emailsTable, sendersTable, digestsTable, digestSectionsTable, storiesTable } from "@workspace/db";
-import { eq, desc, sql, and, gte, count } from "drizzle-orm";
-import { processEmailsIntoDigest, type EmailContent } from "../lib/ai-processor";
+import { eq, desc, sql, and, gte, count, inArray } from "drizzle-orm";
+import { processEmailsIntoDigest, type EmailContent, type FeedbackContext } from "../lib/ai-processor";
 import { GetDigestParams, GenerateDigestBody, ListDigestsQueryParams } from "@workspace/api-zod";
 
 const router = Router();
@@ -17,7 +17,6 @@ router.get("/", async (req, res) => {
     .orderBy(desc(digestsTable.createdAt))
     .limit(limit);
 
-  // Get story counts per digest via sections
   const storyCountsRaw = await db
     .select({
       digestId: digestSectionsTable.digestId,
@@ -72,7 +71,6 @@ router.post("/generate", async (req, res) => {
   const parsed = GenerateDigestBody.safeParse(req.body ?? {});
   const hoursBack = (parsed.success ? parsed.data.hoursBack : undefined) ?? 24;
 
-  // Fetch unprocessed emails
   const since = new Date(Date.now() - hoursBack * 60 * 60 * 1000);
   const emails = await db
     .select({
@@ -88,6 +86,26 @@ router.post("/generate", async (req, res) => {
     .where(gte(emailsTable.receivedAt, since))
     .orderBy(desc(emailsTable.receivedAt));
 
+  // Build feedback context from past story ratings
+  const likedStories = await db
+    .select({ headline: storiesTable.headline, sourceName: storiesTable.sourceName })
+    .from(storiesTable)
+    .where(eq(storiesTable.userFeedback, "up"))
+    .orderBy(desc(storiesTable.createdAt))
+    .limit(30);
+
+  const dislikedStories = await db
+    .select({ headline: storiesTable.headline, sourceName: storiesTable.sourceName })
+    .from(storiesTable)
+    .where(eq(storiesTable.userFeedback, "down"))
+    .orderBy(desc(storiesTable.createdAt))
+    .limit(30);
+
+  const feedback: FeedbackContext = {
+    likedTopics: likedStories.map((s) => s.headline).filter(Boolean),
+    dislikedTopics: dislikedStories.map((s) => s.headline).filter(Boolean),
+  };
+
   const emailContent: EmailContent[] = emails.map((e) => ({
     senderId: e.senderId,
     senderEmail: e.senderEmail ?? "",
@@ -97,7 +115,6 @@ router.post("/generate", async (req, res) => {
     receivedAt: e.receivedAt,
   }));
 
-  // Create digest record
   const today = new Date().toISOString().split("T")[0]!;
   const [digest] = await db
     .insert(digestsTable)
@@ -105,9 +122,8 @@ router.post("/generate", async (req, res) => {
     .returning();
 
   try {
-    const output = await processEmailsIntoDigest(emailContent);
+    const output = await processEmailsIntoDigest(emailContent, feedback);
 
-    // Insert sections and stories
     for (let i = 0; i < output.sections.length; i++) {
       const section = output.sections[i]!;
       if (section.stories.length === 0) continue;
@@ -129,6 +145,7 @@ router.post("/generate", async (req, res) => {
           headline: story.headline,
           summary: story.summary,
           whyItMatters: story.whyItMatters,
+          takeaways: story.takeaways ?? [],
           sourceUrl: story.sourceUrl,
           sourceName: story.sourceName,
           relevanceScore: story.relevanceScore,
@@ -137,10 +154,8 @@ router.post("/generate", async (req, res) => {
       }
     }
 
-    // Mark as ready
     await db.update(digestsTable).set({ status: "ready" }).where(eq(digestsTable.id, digest!.id));
 
-    // Mark emails as processed
     await db
       .update(emailsTable)
       .set({ processed: true })
@@ -184,6 +199,7 @@ async function buildFullDigest(digestId: number) {
           headline: s.headline,
           summary: s.summary,
           whyItMatters: s.whyItMatters,
+          takeaways: (s.takeaways as string[]) ?? [],
           sourceUrl: s.sourceUrl,
           sourceName: s.sourceName,
           relevanceScore: s.relevanceScore,

@@ -12,6 +12,7 @@ export interface Story {
   headline: string;
   summary: string;
   whyItMatters: string;
+  takeaways: string[];
   /** @nullable */
   sourceUrl?: string | null;
   /** @nullable */

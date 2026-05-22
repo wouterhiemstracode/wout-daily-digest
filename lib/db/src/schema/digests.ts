@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, date } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, date, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -29,6 +29,7 @@ export const storiesTable = pgTable("stories", {
   relevanceScore: integer("relevance_score").notNull().default(50),
   sortOrder: integer("sort_order").notNull().default(0),
   userFeedback: text("user_feedback"), // up | down | null
+  takeaways: jsonb("takeaways").$type<string[]>().default([]),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

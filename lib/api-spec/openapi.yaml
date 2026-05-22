@@ -494,6 +494,10 @@ components:
           type: string
         whyItMatters:
           type: string
+        takeaways:
+          type: array
+          items:
+            type: string
         sourceUrl:
           type: ["string", "null"]
         sourceName:
@@ -510,6 +514,7 @@ components:
         - headline
         - summary
         - whyItMatters
+        - takeaways
         - relevanceScore
         - sortOrder
 
