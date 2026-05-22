@@ -40,7 +40,7 @@ export function ClassicBroadsheet() {
         {/* Masthead */}
         <div className="text-center mb-10 border-b-[6px] double border-[#2C1810] pb-8">
           <h1 className="font-['Playfair_Display'] text-5xl md:text-7xl lg:text-8xl font-black text-[#2C1810] tracking-tighter mb-4 leading-none uppercase">
-            Wout's Daily Digest
+            ☕ Wout's Daily Digest
           </h1>
           <p className="font-['Playfair_Display'] text-xl md:text-2xl italic text-[#4a3b32]">
             Your morning intelligence, beautifully curated.
