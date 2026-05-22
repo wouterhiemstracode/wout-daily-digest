@@ -79,9 +79,9 @@ export default function DigestView() {
             <img src="/wout-reading.png" alt="Wout reading the digest" className="w-full object-cover mix-blend-multiply" />
           </div>
           <div className="flex-1 text-center sm:text-left">
-            <h1 className="text-3xl sm:text-4xl font-black text-primary uppercase tracking-tight leading-tight mb-2"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
-              Wout's Daily Digest
+            <h1 className="text-3xl sm:text-5xl text-primary leading-none mb-2"
+              style={{ fontFamily: "'UnifrakturMaguntia', 'Playfair Display', Georgia, serif", fontWeight: 400 }}>
+              The Wout Street Journal
             </h1>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 font-sans text-[11px] uppercase tracking-widest text-muted-foreground border-t border-border pt-2 mb-3">
               <span>{format(new Date(digest.date), "EEEE, MMMM d, yyyy")}</span>
