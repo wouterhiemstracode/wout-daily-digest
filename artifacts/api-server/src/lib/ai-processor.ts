@@ -19,7 +19,7 @@ export interface ProcessedStory {
   sourceUrl: string | null;
   sourceName: string | null;
   relevanceScore: number;
-  section: "top_stories" | "funding_ipos" | "ai_software" | "trends" | "takeaways" | "watch" | "links";
+  section: "top_stories" | "funding_ipos" | "ai_software" | "trends" | "takeaways" | "watch" | "links" | "how_i_ai";
 }
 
 export interface DigestOutput {
@@ -127,6 +127,7 @@ SECTION TYPES:
 - takeaways: Practical insights and lessons Wout can actually use
 - watch: Things moving that are worth keeping an eye on this week
 - links: Genuinely useful articles, tools, or resources (not promotional)
+- how_i_ai: SPECIAL — only use this if Lenny's Newsletter contains a "How I AI" feature. Extract that specific feature as a single story. The headline should be the person's name and role (e.g. "Sarah Chen, Head of Growth at Acme"). The summary should explain what they shared about using AI. The takeaways should be their 1-3 most useful AI tips or habits. If there is no "How I AI" feature in Lenny's Newsletter today, do not create a how_i_ai story.
 
 For each story output:
 - headline: 6-10 words, punchy, tells the news directly
@@ -152,7 +153,7 @@ Return ONLY valid JSON:
       "sourceUrl": "string or null",
       "sourceName": "string or null",
       "relevanceScore": number,
-      "section": "top_stories|funding_ipos|ai_software|trends|takeaways|watch|links"
+      "section": "top_stories|funding_ipos|ai_software|trends|takeaways|watch|links|how_i_ai"
     }
   ]
 }`;
@@ -197,6 +198,7 @@ function buildDigestFromStories(stories: ProcessedStory[], intro = ""): DigestOu
     { type: "takeaways" as const, title: "Important Takeaways" },
     { type: "watch" as const, title: "Things To Watch" },
     { type: "links" as const, title: "Useful Links" },
+    { type: "how_i_ai" as const, title: "How I AI" },
   ];
 
   const sortedAll = [...stories].sort((a, b) => b.relevanceScore - a.relevanceScore);

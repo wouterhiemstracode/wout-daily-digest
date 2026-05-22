@@ -53,10 +53,14 @@ export default function DigestView() {
     );
   }
 
-  // Split into top stories and everything else
+  // Split sections
   const topSection = digest.sections.find((s) => s.sectionType === "top_stories");
+  const howIAISection = digest.sections.find((s) => s.sectionType === "how_i_ai");
+  const howIAIStory = howIAISection?.stories[0] ?? null;
   const top5 = topSection?.stories.slice(0, 5) ?? [];
-  const restSections = digest.sections.filter((s) => s.sectionType !== "top_stories" && s.stories.length > 0);
+  const restSections = digest.sections.filter(
+    (s) => s.sectionType !== "top_stories" && s.sectionType !== "how_i_ai" && s.stories.length > 0
+  );
 
   return (
     <div className="max-w-5xl mx-auto pb-24 animate-in fade-in duration-500">
@@ -99,6 +103,71 @@ export default function DigestView() {
           </div>
         </div>
       </div>
+
+      {/* How I AI Takeaway of Today */}
+      {howIAIStory && (
+        <div className="mb-8 border-2 border-primary bg-primary/5 relative overflow-hidden">
+          {/* Label tab */}
+          <div className="bg-primary px-4 py-1.5 inline-flex items-center gap-2">
+            <span className="text-[10px] font-sans font-bold uppercase tracking-[0.2em] text-primary-foreground">
+              ✦ How I AI — Takeaway of Today
+            </span>
+          </div>
+          <div className="px-6 py-5">
+            {/* Person */}
+            <p className="text-[11px] font-sans uppercase tracking-widest text-primary/70 mb-2">
+              {howIAIStory.sourceName ?? "Lenny's Newsletter"}
+            </p>
+            <h3
+              className="text-xl sm:text-2xl font-bold text-primary leading-snug mb-3"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            >
+              {howIAIStory.headline}
+            </h3>
+            <p className="text-sm leading-relaxed text-foreground/80 mb-4">
+              {howIAIStory.summary}
+            </p>
+            {/* Takeaway bullets */}
+            {howIAIStory.takeaways && howIAIStory.takeaways.length > 0 && (
+              <ul className="space-y-2 border-t border-primary/20 pt-4">
+                {howIAIStory.takeaways.map((t, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-sm font-sans text-foreground/80">
+                    <span className="text-primary font-black shrink-0 mt-0.5">✦</span>
+                    <span>{t}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {/* Footer */}
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-primary/20">
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => feedbackMutation.mutate({ data: { storyId: howIAIStory.id, rating: 'up' } })}
+                  className={`p-1.5 transition-colors rounded ${howIAIStory.userFeedback === 'up' ? 'text-green-700 bg-green-50' : 'text-muted-foreground hover:text-green-700'}`}
+                >
+                  <ThumbsUp className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => feedbackMutation.mutate({ data: { storyId: howIAIStory.id, rating: 'down' } })}
+                  className={`p-1.5 transition-colors rounded ${howIAIStory.userFeedback === 'down' ? 'text-destructive bg-destructive/5' : 'text-muted-foreground hover:text-destructive'}`}
+                >
+                  <ThumbsDown className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              {howIAIStory.sourceUrl && (
+                <a
+                  href={howIAIStory.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-sans font-semibold uppercase tracking-wider text-primary hover:text-primary/80 border border-primary px-3 py-1 transition-colors"
+                >
+                  Read full piece <ChevronRight className="h-3 w-3" />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main two-column layout */}
       <div className="flex flex-col lg:flex-row gap-10">
