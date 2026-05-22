@@ -63,19 +63,32 @@ export default function DigestView() {
       </Link>
 
       {/* Masthead bar */}
-      <div className="border-t-[3px] border-b-[3px] border-double border-foreground py-6 mb-10 text-center">
-        <h1
-          className="text-4xl sm:text-5xl font-black text-primary uppercase tracking-tight leading-tight"
-          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-        >
-          Wout's Daily Digest
-        </h1>
-        <div className="flex items-center justify-center gap-4 mt-3 font-sans text-[11px] uppercase tracking-widest text-muted-foreground">
-          <span>{format(new Date(digest.date), "EEEE, MMMM d, yyyy")}</span>
-          <span>·</span>
-          <span>{digest.storyCount} Stories</span>
-          <span>·</span>
-          <span className="capitalize">{digest.status}</span>
+      <div className="border-t-[3px] border-b-[3px] border-double border-foreground py-6 mb-10">
+        <div className="flex flex-col sm:flex-row items-center gap-6">
+          {/* Illustration */}
+          <div className="shrink-0 border-2 border-border bg-card overflow-hidden w-48 sm:w-56">
+            <img
+              src="/wout-reading.png"
+              alt="Wout reading the digest"
+              className="w-full object-cover mix-blend-multiply"
+            />
+          </div>
+          {/* Title block */}
+          <div className="flex-1 text-center sm:text-left">
+            <h1
+              className="text-4xl sm:text-5xl font-black text-primary uppercase tracking-tight leading-tight mb-3"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            >
+              Wout's Daily Digest
+            </h1>
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 font-sans text-[11px] uppercase tracking-widest text-muted-foreground border-t border-border pt-3">
+              <span>{format(new Date(digest.date), "EEEE, MMMM d, yyyy")}</span>
+              <span>·</span>
+              <span>{digest.storyCount} Stories</span>
+              <span>·</span>
+              <span className="capitalize">{digest.status}</span>
+            </div>
+          </div>
         </div>
       </div>
 

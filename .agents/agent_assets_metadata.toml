@@ -6,3 +6,9 @@ id = "-Gy54OFYR6s7ENOhPG2_d"
 uri = "file://artifacts/newsletter-digest/public/coffee-cup.png"
 type = "image"
 title = "generated_image"
+
+[[generated]]
+id = "GARXvZndA7bdGTeGxU12e"
+uri = "file://artifacts/newsletter-digest/public/wout-reading.png"
+type = "image"
+title = "generated_image"
