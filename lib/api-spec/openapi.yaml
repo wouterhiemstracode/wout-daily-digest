@@ -3,13 +3,26 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Newsletter Digest API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Gmail OAuth authentication
+  - name: senders
+    description: Newsletter sender management
+  - name: emails
+    description: Email fetching and management
+  - name: digests
+    description: Daily digest generation and retrieval
+  - name: feedback
+    description: Story feedback for preference learning
+  - name: search
+    description: Search across digests and stories
+
 paths:
   /healthz:
     get:
@@ -24,6 +37,269 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/gmail/url:
+    get:
+      operationId: getGmailAuthUrl
+      tags: [auth]
+      summary: Get Gmail OAuth URL
+      description: Returns the URL to initiate Gmail OAuth flow
+      responses:
+        "200":
+          description: Auth URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUrl"
+
+  /auth/gmail/status:
+    get:
+      operationId: getGmailAuthStatus
+      tags: [auth]
+      summary: Get Gmail connection status
+      description: Returns whether Gmail is connected
+      responses:
+        "200":
+          description: Connection status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GmailStatus"
+
+  /auth/gmail/disconnect:
+    post:
+      operationId: disconnectGmail
+      tags: [auth]
+      summary: Disconnect Gmail
+      description: Removes Gmail OAuth tokens
+      responses:
+        "200":
+          description: Disconnected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /senders:
+    get:
+      operationId: listSenders
+      tags: [senders]
+      summary: List all newsletter senders
+      responses:
+        "200":
+          description: List of senders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sender"
+    post:
+      operationId: createSender
+      tags: [senders]
+      summary: Add a newsletter sender
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderInput"
+      responses:
+        "201":
+          description: Created sender
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sender"
+
+  /senders/{id}:
+    delete:
+      operationId: deleteSender
+      tags: [senders]
+      summary: Remove a newsletter sender
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /emails/sync:
+    post:
+      operationId: syncEmails
+      tags: [emails]
+      summary: Fetch latest emails from Gmail
+      description: Fetches emails from the last 24 hours for all tracked senders
+      responses:
+        "200":
+          description: Sync result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncResult"
+
+  /emails:
+    get:
+      operationId: listEmails
+      tags: [emails]
+      summary: List fetched emails
+      parameters:
+        - name: senderId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of emails
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Email"
+
+  /digests:
+    get:
+      operationId: listDigests
+      tags: [digests]
+      summary: List all generated digests
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of digests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DigestSummary"
+
+  /digests/generate:
+    post:
+      operationId: generateDigest
+      tags: [digests]
+      summary: Generate a new daily digest
+      description: AI processes recent emails and generates a structured digest
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DigestGenerateInput"
+      responses:
+        "200":
+          description: Generated digest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Digest"
+
+  /digests/latest:
+    get:
+      operationId: getLatestDigest
+      tags: [digests]
+      summary: Get the most recent digest
+      responses:
+        "200":
+          description: Latest digest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Digest"
+        "404":
+          description: No digest found
+
+  /digests/{id}:
+    get:
+      operationId: getDigest
+      tags: [digests]
+      summary: Get a specific digest by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Digest detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Digest"
+        "404":
+          description: Not found
+
+  /feedback:
+    post:
+      operationId: submitFeedback
+      tags: [feedback]
+      summary: Submit thumbs up/down feedback on a story
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeedbackInput"
+      responses:
+        "201":
+          description: Feedback recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Feedback"
+
+  /search:
+    get:
+      operationId: searchDigests
+      tags: [search]
+      summary: Search digests and stories
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResults"
+
+  /stats:
+    get:
+      operationId: getStats
+      tags: [digests]
+      summary: Get dashboard statistics
+      description: Returns counts and metadata for the dashboard overview
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +310,303 @@ components:
       required:
         - status
 
+    AuthUrl:
+      type: object
+      properties:
+        url:
+          type: string
+      required:
+        - url
+
+    GmailStatus:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        email:
+          type: ["string", "null"]
+      required:
+        - connected
+        - email
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+
+    Sender:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: ["string", "null"]
+        active:
+          type: boolean
+        emailCount:
+          type: integer
+        createdAt:
+          type: string
+      required:
+        - id
+        - email
+        - active
+        - emailCount
+        - createdAt
+
+    SenderInput:
+      type: object
+      properties:
+        email:
+          type: string
+        name:
+          type: ["string", "null"]
+      required:
+        - email
+
+    SyncResult:
+      type: object
+      properties:
+        fetched:
+          type: integer
+        senders:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+      required:
+        - fetched
+        - senders
+        - errors
+
+    Email:
+      type: object
+      properties:
+        id:
+          type: integer
+        senderId:
+          type: integer
+        senderEmail:
+          type: string
+        subject:
+          type: string
+        receivedAt:
+          type: string
+        processed:
+          type: boolean
+        gmailMessageId:
+          type: string
+      required:
+        - id
+        - senderId
+        - senderEmail
+        - subject
+        - receivedAt
+        - processed
+        - gmailMessageId
+
+    DigestSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+        storyCount:
+          type: integer
+        createdAt:
+          type: string
+        status:
+          type: string
+      required:
+        - id
+        - date
+        - storyCount
+        - createdAt
+        - status
+
+    Digest:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+        status:
+          type: string
+        storyCount:
+          type: integer
+        createdAt:
+          type: string
+        sections:
+          type: array
+          items:
+            $ref: "#/components/schemas/DigestSection"
+      required:
+        - id
+        - date
+        - status
+        - storyCount
+        - createdAt
+        - sections
+
+    DigestSection:
+      type: object
+      properties:
+        id:
+          type: integer
+        digestId:
+          type: integer
+        sectionType:
+          type: string
+        title:
+          type: string
+        sortOrder:
+          type: integer
+        stories:
+          type: array
+          items:
+            $ref: "#/components/schemas/Story"
+      required:
+        - id
+        - digestId
+        - sectionType
+        - title
+        - sortOrder
+        - stories
+
+    Story:
+      type: object
+      properties:
+        id:
+          type: integer
+        sectionId:
+          type: integer
+        headline:
+          type: string
+        summary:
+          type: string
+        whyItMatters:
+          type: string
+        sourceUrl:
+          type: ["string", "null"]
+        sourceName:
+          type: ["string", "null"]
+        relevanceScore:
+          type: integer
+        sortOrder:
+          type: integer
+        userFeedback:
+          type: ["string", "null"]
+      required:
+        - id
+        - sectionId
+        - headline
+        - summary
+        - whyItMatters
+        - relevanceScore
+        - sortOrder
+
+    DigestGenerateInput:
+      type: object
+      properties:
+        hoursBack:
+          type: integer
+
+    FeedbackInput:
+      type: object
+      properties:
+        storyId:
+          type: integer
+        rating:
+          type: string
+      required:
+        - storyId
+        - rating
+
+    Feedback:
+      type: object
+      properties:
+        id:
+          type: integer
+        storyId:
+          type: integer
+        rating:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - storyId
+        - rating
+        - createdAt
+
+    SearchResults:
+      type: object
+      properties:
+        stories:
+          type: array
+          items:
+            $ref: "#/components/schemas/StorySearchResult"
+        total:
+          type: integer
+      required:
+        - stories
+        - total
+
+    StorySearchResult:
+      type: object
+      properties:
+        id:
+          type: integer
+        headline:
+          type: string
+        summary:
+          type: string
+        whyItMatters:
+          type: string
+        sourceUrl:
+          type: ["string", "null"]
+        sourceName:
+          type: ["string", "null"]
+        digestId:
+          type: integer
+        digestDate:
+          type: string
+        relevanceScore:
+          type: integer
+      required:
+        - id
+        - headline
+        - summary
+        - whyItMatters
+        - digestId
+        - digestDate
+        - relevanceScore
+
+    Stats:
+      type: object
+      properties:
+        totalDigests:
+          type: integer
+        totalStories:
+          type: integer
+        totalSenders:
+          type: integer
+        emailsProcessed:
+          type: integer
+        lastDigestDate:
+          type: ["string", "null"]
+        lastSyncAt:
+          type: ["string", "null"]
+      required:
+        - totalDigests
+        - totalStories
+        - totalSenders
+        - emailsProcessed
