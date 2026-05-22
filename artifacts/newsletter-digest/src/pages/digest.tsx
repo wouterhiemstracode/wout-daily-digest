@@ -2,7 +2,6 @@ import { useParams, Link } from "wouter";
 import { useGetDigest, useSubmitFeedback, getGetDigestQueryKey } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { ThumbsUp, ThumbsDown, ExternalLink, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQueryClient } from "@tanstack/react-query";
@@ -11,14 +10,14 @@ export default function DigestView() {
   const params = useParams();
   const id = parseInt(params.id || "0", 10);
   const { data: digest, isLoading } = useGetDigest(id, { query: { enabled: !!id, queryKey: getGetDigestQueryKey(id) } });
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const feedbackMutation = useSubmitFeedback({
     mutation: {
       onSuccess: () => {
-        toast({ title: "Feedback recorded", description: "Signal logged for future briefings." });
+        toast({ title: "Got it!", description: "We'll keep that in mind for tomorrow." });
         queryClient.invalidateQueries({ queryKey: getGetDigestQueryKey(id) });
       }
     }
@@ -26,10 +25,10 @@ export default function DigestView() {
 
   if (isLoading) {
     return (
-      <div className="space-y-8 animate-in fade-in">
-        <Skeleton className="h-8 w-1/4" />
-        <Skeleton className="h-12 w-full" />
-        <div className="space-y-4">
+      <div className="space-y-8 animate-in fade-in max-w-4xl mx-auto">
+        <Skeleton className="h-6 w-24" />
+        <Skeleton className="h-12 w-2/3" />
+        <div className="space-y-6">
           <Skeleton className="h-40 w-full" />
           <Skeleton className="h-40 w-full" />
         </div>
@@ -38,85 +37,152 @@ export default function DigestView() {
   }
 
   if (!digest) {
-    return <div className="text-center py-12 text-muted-foreground font-mono">Digest not found.</div>;
+    return (
+      <div className="text-center py-16 text-muted-foreground font-sans">
+        <p
+          className="text-2xl italic mb-2"
+          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+        >
+          This edition couldn't be found.
+        </p>
+        <Link href="/archive">
+          <span className="text-sm text-primary underline cursor-pointer">Back to the archive</span>
+        </Link>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-12 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="space-y-4 border-b border-border pb-8">
-        <Button asChild variant="ghost" size="sm" className="font-mono text-xs uppercase tracking-wider -ml-3 text-muted-foreground hover:text-primary">
-          <Link href="/archive"><ArrowLeft className="h-3 w-3 mr-2" /> Back to Archive</Link>
-        </Button>
-        <h1 className="text-4xl font-bold tracking-tight mt-4">Intelligence Briefing</h1>
-        <div className="flex items-center gap-4 font-mono text-sm">
-          <div className="text-primary font-bold">{format(new Date(digest.date), "EEEE, MMMM do, yyyy")}</div>
-          <div className="text-muted-foreground">|</div>
-          <div className="text-muted-foreground">{digest.storyCount} STORIES</div>
-          <div className="text-muted-foreground">|</div>
-          <div className="text-muted-foreground">STATUS: {digest.status.toUpperCase()}</div>
+    <div className="max-w-4xl mx-auto pb-24 animate-in fade-in duration-500">
+
+      {/* Back link */}
+      <Link href="/archive">
+        <span className="inline-flex items-center gap-2 font-sans text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors cursor-pointer mb-8 block">
+          <ArrowLeft className="h-3 w-3" /> Back to Past Editions
+        </span>
+      </Link>
+
+      {/* Masthead bar */}
+      <div className="border-t-[3px] border-b-[3px] border-double border-foreground py-6 mb-10 text-center">
+        <h1
+          className="text-4xl sm:text-5xl font-black text-primary uppercase tracking-tight leading-tight"
+          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+        >
+          ☕ Wout's Daily Digest
+        </h1>
+        <div className="flex items-center justify-center gap-4 mt-3 font-sans text-[11px] uppercase tracking-widest text-muted-foreground">
+          <span>{format(new Date(digest.date), "EEEE, MMMM d, yyyy")}</span>
+          <span>·</span>
+          <span>{digest.storyCount} Stories</span>
+          <span>·</span>
+          <span className="capitalize">{digest.status}</span>
         </div>
       </div>
 
-      <div className="space-y-16">
+      {/* Sections */}
+      <div className="space-y-14">
         {digest.sections.map((section) => (
-          <section key={section.id} className="space-y-6">
-            <h2 className="text-2xl font-bold border-b border-primary/20 pb-2 uppercase tracking-wide text-primary">
-              {section.title}
-            </h2>
-            
+          <section key={section.id}>
+            {/* Section header */}
+            <div className="flex items-center gap-4 mb-6">
+              <span className="flex-1 h-0.5 bg-foreground"></span>
+              <h2
+                className="text-sm font-sans font-bold uppercase tracking-[0.2em] text-primary whitespace-nowrap"
+              >
+                {section.title}
+              </h2>
+              <span className="flex-1 h-0.5 bg-foreground"></span>
+            </div>
+
+            {/* Stories */}
             <div className="space-y-8">
-              {section.stories.map((story) => (
-                <div key={story.id} className="bg-card border border-border p-6 rounded-xl relative group transition-colors hover:border-primary/50">
-                  <div className="absolute top-6 right-6 font-mono text-xs font-bold text-primary/80 bg-primary/10 px-2 py-1 rounded">
-                    {(story.relevanceScore * 100).toFixed(0)}%
-                  </div>
-                  <h3 className="text-xl font-bold leading-tight pr-16 text-foreground group-hover:text-primary transition-colors">
-                    {story.headline}
-                  </h3>
-                  
-                  <div className="mt-4 space-y-4">
-                    <p className="text-muted-foreground leading-relaxed text-sm">
-                      {story.summary}
-                    </p>
-                    <div className="bg-muted p-4 rounded-lg border border-border/50">
-                      <div className="font-mono text-xs font-bold uppercase tracking-wider mb-2 text-primary">Why it matters</div>
-                      <p className="text-sm">{story.whyItMatters}</p>
-                    </div>
+              {section.stories.map((story, i) => (
+                <article
+                  key={story.id}
+                  className={`${i > 0 ? "pt-8 border-t border-dashed border-border" : ""}`}
+                >
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <h3
+                      className="text-2xl font-bold leading-tight text-foreground"
+                      style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                    >
+                      {story.headline}
+                    </h3>
+                    <span className="shrink-0 text-[10px] font-sans font-bold uppercase tracking-wider text-muted-foreground border border-border bg-card px-2 py-1 mt-1">
+                      {(story.relevanceScore * 100).toFixed(0)}% relevant
+                    </span>
                   </div>
 
-                  <div className="mt-6 flex items-center justify-between pt-4 border-t border-border">
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                  {story.sourceName && (
+                    <p className="text-[11px] font-sans uppercase tracking-widest text-muted-foreground border-y border-border/60 py-1 inline-block mb-4">
+                      {story.sourceName}
+                    </p>
+                  )}
+
+                  <p className="text-base leading-relaxed text-foreground/85 mb-5">
+                    {story.summary}
+                  </p>
+
+                  {story.whyItMatters && (
+                    <div className="border-l-4 border-primary bg-card px-5 py-4 mb-5">
+                      <div className="text-[10px] font-sans font-bold uppercase tracking-widest text-primary mb-2">
+                        Why it matters
+                      </div>
+                      <p className="text-sm leading-relaxed text-foreground/80 italic"
+                         style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                        {story.whyItMatters}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Footer: feedback + source */}
+                  <div className="flex items-center justify-between pt-4 border-t border-border/60">
+                    <div className="flex items-center gap-1">
+                      <button
                         onClick={() => feedbackMutation.mutate({ data: { storyId: story.id, rating: 'up' } })}
-                        className={story.userFeedback === 'up' ? 'text-green-500 bg-green-500/10' : 'text-muted-foreground hover:text-green-500 hover:bg-green-500/10'}
+                        className={`p-2 transition-colors rounded ${story.userFeedback === 'up' ? 'text-green-700 bg-green-50' : 'text-muted-foreground hover:text-green-700'}`}
+                        aria-label="Good story"
                       >
                         <ThumbsUp className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      </button>
+                      <button
                         onClick={() => feedbackMutation.mutate({ data: { storyId: story.id, rating: 'down' } })}
-                        className={story.userFeedback === 'down' ? 'text-destructive bg-destructive/10' : 'text-muted-foreground hover:text-destructive hover:bg-destructive/10'}
+                        className={`p-2 transition-colors rounded ${story.userFeedback === 'down' ? 'text-destructive bg-destructive/5' : 'text-muted-foreground hover:text-destructive'}`}
+                        aria-label="Not useful"
                       >
                         <ThumbsDown className="h-4 w-4" />
-                      </Button>
+                      </button>
+                      <span className="text-[10px] font-sans text-muted-foreground ml-1">
+                        Helpful?
+                      </span>
                     </div>
                     {story.sourceUrl && (
-                      <Button asChild variant="link" size="sm" className="font-mono text-xs text-muted-foreground hover:text-primary">
-                        <a href={story.sourceUrl} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-3 w-3 mr-2" />
-                          {story.sourceName || "Source"}
-                        </a>
-                      </Button>
+                      <a
+                        href={story.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-[11px] font-sans text-muted-foreground hover:text-primary transition-colors uppercase tracking-wider"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        {story.sourceName || "Read source"}
+                      </a>
                     )}
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           </section>
         ))}
+      </div>
+
+      {/* Footer rule */}
+      <div className="mt-14 pt-6 border-t-[3px] border-double border-foreground text-center">
+        <p
+          className="text-sm italic text-muted-foreground"
+          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+        >
+          End of edition · Wout's Daily Digest
+        </p>
       </div>
     </div>
   );

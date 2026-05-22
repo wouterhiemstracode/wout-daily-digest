@@ -1,16 +1,14 @@
 import { Link } from "wouter";
-import { 
-  useGetStats, 
-  useGetLatestDigest, 
+import {
+  useGetStats,
+  useGetLatestDigest,
   useGetGmailAuthStatus,
   useGetGmailAuthUrl,
   useGenerateDigest,
   useSyncEmails
 } from "@workspace/api-client-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { format } from "date-fns";
-import { RefreshCw, FileText, Mail, Activity, ArrowRight, Zap } from "lucide-react";
+import { RefreshCw, ArrowRight, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -19,18 +17,17 @@ export default function Dashboard() {
   const { data: latestDigest, isLoading: digestLoading, refetch: refetchDigest } = useGetLatestDigest();
   const { data: authStatus } = useGetGmailAuthStatus();
   const { data: authUrl } = useGetGmailAuthUrl({ query: { enabled: !authStatus?.connected } });
-  
   const { toast } = useToast();
-  
+
   const generateMutation = useGenerateDigest({
     mutation: {
       onSuccess: () => {
-        toast({ title: "Digest generated", description: "Your latest intelligence briefing is ready." });
+        toast({ title: "Briefing ready!", description: "Your morning digest has been generated." });
         refetchStats();
         refetchDigest();
       },
-      onError: (err) => {
-        toast({ title: "Generation failed", description: "Could not generate digest.", variant: "destructive" });
+      onError: () => {
+        toast({ title: "Couldn't generate", description: "Something went wrong. Try again in a moment.", variant: "destructive" });
       }
     }
   });
@@ -38,197 +35,243 @@ export default function Dashboard() {
   const syncMutation = useSyncEmails({
     mutation: {
       onSuccess: (data) => {
-        toast({ 
-          title: "Sync complete", 
-          description: `Fetched ${data.fetched} emails from ${data.senders} senders.` 
+        toast({
+          title: "All caught up!",
+          description: `Fetched ${data.fetched} emails from ${data.senders} sources.`
         });
         refetchStats();
       },
       onError: () => {
-        toast({ title: "Sync failed", description: "Could not sync emails from Gmail.", variant: "destructive" });
+        toast({ title: "Sync failed", description: "Couldn't reach Gmail. Try again shortly.", variant: "destructive" });
       }
     }
   });
 
+  const today = format(new Date(), "EEEE, MMMM d, yyyy");
+
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Intelligence Dashboard</h1>
-          <p className="text-muted-foreground mt-1 font-mono text-sm">System overview and latest signals.</p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="outline" 
-            onClick={() => syncMutation.mutate()} 
-            disabled={syncMutation.isPending || !authStatus?.connected}
-            className="font-mono text-xs uppercase tracking-wider"
-          >
-            <RefreshCw className={`h-3 w-3 mr-2 ${syncMutation.isPending ? "animate-spin" : ""}`} />
-            Sync Sources
-          </Button>
-          <Button 
-            onClick={() => generateMutation.mutate({ data: {} })} 
-            disabled={generateMutation.isPending || !authStatus?.connected}
-            className="font-mono text-xs uppercase tracking-wider"
-          >
-            <Zap className="h-3 w-3 mr-2" />
-            {generateMutation.isPending ? "Compiling..." : "Generate Briefing"}
-          </Button>
-        </div>
+    <div className="animate-in fade-in duration-500">
+
+      {/* Top rule + meta bar */}
+      <div className="border-t-[3px] border-foreground pt-3 pb-2 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        <span className="text-[11px] font-sans uppercase tracking-[0.15em] text-muted-foreground font-semibold">
+          Morning Edition
+        </span>
+        {authStatus?.connected && (
+          <span className="flex items-center gap-1.5 text-[11px] font-sans text-muted-foreground">
+            <CheckCircle2 className="h-3 w-3 text-green-600" />
+            {authStatus.email}
+          </span>
+        )}
+        <span className="text-[11px] font-sans uppercase tracking-[0.15em] text-muted-foreground font-semibold">
+          {today}
+        </span>
       </div>
 
-      {/* Auth Warning */}
+      {/* Masthead */}
+      <div className="text-center border-b-[6px] border-double border-foreground pb-8 mb-8">
+        <h1
+          className="text-6xl sm:text-7xl lg:text-8xl font-black text-primary uppercase tracking-tight leading-none mb-4"
+          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+        >
+          ☕ Wout's Daily Digest
+        </h1>
+        <p
+          className="text-xl sm:text-2xl italic text-muted-foreground"
+          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+        >
+          Your morning intelligence, beautifully curated.
+        </p>
+      </div>
+
+      {/* Gmail not connected warning */}
       {!authStatus?.connected && (
-        <Card className="border-destructive/50 bg-destructive/10">
-          <CardContent className="flex flex-col sm:flex-row items-center justify-between p-6 gap-4">
-            <div className="flex items-center gap-4">
-              <div className="h-10 w-10 rounded-full bg-destructive/20 flex items-center justify-center">
-                <Mail className="h-5 w-5 text-destructive" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-destructive">Gmail Not Connected</h3>
-                <p className="text-sm text-destructive/80">Connect your Gmail account to sync newsletters and generate digests.</p>
-              </div>
-            </div>
-            <Button asChild variant="default" className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-              <a href={authUrl?.url || "#"}>Connect Gmail</a>
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="border border-destructive/40 bg-destructive/5 p-6 mb-8 text-center">
+          <p
+            className="text-lg italic text-destructive mb-4"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+          >
+            Your Gmail account isn't connected yet.
+          </p>
+          <p className="text-sm font-sans text-muted-foreground mb-4">
+            Connect it to start syncing newsletters and generating your daily briefing.
+          </p>
+          <a
+            href={authUrl?.url || "#"}
+            className="inline-block px-6 py-2.5 border-2 border-primary bg-primary text-primary-foreground font-sans text-sm font-semibold uppercase tracking-wider hover:bg-primary/90 transition-colors"
+          >
+            Connect Gmail
+          </a>
+        </div>
       )}
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard 
-          title="Total Digests" 
-          value={stats?.totalDigests} 
-          icon={FileText} 
-          isLoading={statsLoading} 
-        />
-        <StatCard 
-          title="Total Stories" 
-          value={stats?.totalStories} 
-          icon={Activity} 
-          isLoading={statsLoading} 
-        />
-        <StatCard 
-          title="Tracked Sources" 
-          value={stats?.totalSenders} 
-          icon={Mail} 
-          isLoading={statsLoading} 
-        />
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground font-mono uppercase tracking-wider">Last Sync</CardTitle>
-            <RefreshCw className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-7 w-20" />
-            ) : (
-              <div className="text-2xl font-bold font-mono">
-                {stats?.lastSyncAt ? format(new Date(stats.lastSyncAt), "HH:mm") : "--:--"}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* Actions + Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 border-b-2 border-foreground pb-8 mb-8">
+        {/* Actions */}
+        <div className="md:col-span-5 flex flex-col justify-center gap-3">
+          <button
+            onClick={() => syncMutation.mutate()}
+            disabled={syncMutation.isPending || !authStatus?.connected}
+            className="w-full border-2 border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background transition-colors py-3 px-5 font-sans text-sm font-semibold uppercase tracking-wider disabled:opacity-40 flex items-center justify-center gap-2"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${syncMutation.isPending ? "animate-spin" : ""}`} />
+            {syncMutation.isPending ? "Syncing…" : "Sync Today's Newsletters"}
+          </button>
+          <button
+            onClick={() => generateMutation.mutate({ data: {} })}
+            disabled={generateMutation.isPending || !authStatus?.connected}
+            className="w-full border-2 border-primary bg-primary text-primary-foreground hover:bg-primary/90 transition-colors py-3 px-5 font-sans text-sm font-semibold uppercase tracking-wider disabled:opacity-40 shadow-[3px_3px_0_0_rgba(0,0,0,0.15)]"
+          >
+            {generateMutation.isPending ? "Writing your briefing…" : "Generate My Briefing"}
+          </button>
+        </div>
+
+        {/* Column divider */}
+        <div className="hidden md:flex md:col-span-1 justify-center">
+          <div className="w-px bg-border self-stretch"></div>
+        </div>
+
+        {/* Stats */}
+        <div className="md:col-span-6 grid grid-cols-3 divide-x divide-border text-center">
+          {[
+            { label: "Digests\nGenerated", value: stats?.totalDigests },
+            { label: "Stories\nCurated", value: stats?.totalStories },
+            { label: "Sources\nTracked", value: stats?.totalSenders },
+          ].map(({ label, value }) => (
+            <div key={label} className="flex flex-col items-center justify-center px-4 py-2">
+              {statsLoading ? (
+                <Skeleton className="h-12 w-16 mb-2" />
+              ) : (
+                <span
+                  className="text-5xl font-black text-primary leading-none mb-2"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                >
+                  {value ?? 0}
+                </span>
+              )}
+              <span className="text-[10px] font-sans uppercase tracking-widest text-muted-foreground border-t border-border pt-2 whitespace-pre-line text-center leading-tight">
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Latest Digest Preview */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-bold flex items-center gap-2">
-          <Zap className="h-5 w-5 text-primary" />
-          Latest Signal
+      {/* Latest Digest / Front Page */}
+      <div>
+        <h2
+          className="text-2xl font-bold uppercase tracking-widest text-primary flex items-center gap-4 mb-6"
+          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+        >
+          <span className="flex-1 h-px bg-foreground inline-block"></span>
+          Today's Front Page
+          <span className="flex-1 h-px bg-foreground inline-block"></span>
         </h2>
-        
+
         {digestLoading ? (
-          <Skeleton className="h-64 w-full rounded-xl" />
-        ) : latestDigest ? (
-          <Card className="border-primary/20 overflow-hidden">
-            <div className="bg-muted p-4 border-b border-border flex justify-between items-center">
-              <div className="font-mono text-sm">
-                <span className="text-muted-foreground">ID: </span>
-                <span className="text-foreground font-bold">{latestDigest.id.toString().padStart(4, '0')}</span>
-                <span className="mx-3 text-muted-foreground">|</span>
-                <span className="text-muted-foreground">DATE: </span>
-                <span className="text-foreground font-bold">{format(new Date(latestDigest.date), "MMM dd, yyyy")}</span>
-              </div>
-              <div className="font-mono text-xs px-2 py-1 rounded bg-primary/20 text-primary font-bold">
-                {latestDigest.storyCount} STORIES
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-32 w-full" />
             </div>
-            <CardContent className="p-0">
-              {latestDigest.sections.slice(0, 1).map((section) => (
-                <div key={section.id} className="p-6">
-                  <h3 className="font-bold text-lg mb-4 text-primary border-b border-primary/20 pb-2 uppercase tracking-wide">{section.title}</h3>
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+          </div>
+        ) : latestDigest ? (
+          <div>
+            {/* Edition meta */}
+            <div className="flex items-center gap-4 font-sans text-[11px] uppercase tracking-widest text-muted-foreground mb-6 border-b border-border pb-3">
+              <span>Edition of {format(new Date(latestDigest.date), "MMMM d, yyyy")}</span>
+              <span>·</span>
+              <span>{latestDigest.storyCount} Stories</span>
+              <span>·</span>
+              <span className="capitalize">{latestDigest.status}</span>
+            </div>
+
+            {/* Stories in newspaper column layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 relative mb-8">
+              <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-border -translate-x-1/2"></div>
+
+              {latestDigest.sections.slice(0, 2).map((section, sectionIdx) => (
+                <div key={section.id} className={sectionIdx === 1 ? "md:pl-4" : "md:pr-4"}>
+                  <h3
+                    className="text-xs font-sans font-bold uppercase tracking-[0.15em] text-muted-foreground border-b border-border pb-2 mb-4"
+                  >
+                    {section.title}
+                  </h3>
                   <div className="space-y-6">
-                    {section.stories.slice(0, 3).map((story) => (
-                      <div key={story.id} className="group cursor-pointer">
-                        <div className="flex items-start justify-between gap-4">
-                          <h4 className="font-medium text-lg leading-tight group-hover:text-primary transition-colors">
-                            {story.headline}
-                          </h4>
-                          <div className="shrink-0 bg-muted px-2 py-1 rounded font-mono text-xs">
-                            {(story.relevanceScore * 100).toFixed(0)}%
-                          </div>
-                        </div>
-                        <p className="text-muted-foreground mt-2 text-sm line-clamp-2">
+                    {section.stories.slice(0, 3).map((story, i) => (
+                      <article key={story.id} className={i > 0 ? "pt-5 border-t border-dashed border-border" : ""}>
+                        <h4
+                          className={`font-bold leading-tight mb-2 text-foreground hover:text-primary transition-colors cursor-pointer ${i === 0 ? "text-2xl" : "text-lg"}`}
+                          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                        >
+                          {story.headline}
+                        </h4>
+                        {story.sourceName && (
+                          <p className="text-[11px] font-sans uppercase tracking-widest text-muted-foreground mb-2 border-y border-border/60 py-1 inline-block">
+                            {story.sourceName}
+                          </p>
+                        )}
+                        <p className="text-sm leading-relaxed text-foreground/80 line-clamp-3">
                           {story.summary}
                         </p>
-                      </div>
+                      </article>
                     ))}
                   </div>
                 </div>
               ))}
-              <div className="p-4 bg-muted/50 border-t border-border flex justify-end">
-                <Button asChild variant="ghost" className="font-mono text-xs uppercase tracking-wider hover:text-primary">
-                  <Link href={`/digest/${latestDigest.id}`}>
-                    Read Full Briefing <ArrowRight className="h-4 w-4 ml-2" />
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            <div className="border-t-2 border-double border-foreground pt-4 flex justify-end">
+              <Link href={`/digest/${latestDigest.id}`}>
+                <span className="inline-flex items-center gap-2 font-sans text-xs font-semibold uppercase tracking-widest text-primary hover:text-foreground transition-colors cursor-pointer">
+                  Read the full edition <ArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </Link>
+            </div>
+          </div>
         ) : (
-          <Card className="p-12 text-center text-muted-foreground flex flex-col items-center justify-center">
-            <FileText className="h-12 w-12 mb-4 opacity-20" />
-            <p>No digests available yet.</p>
+          <div className="text-center py-14 border border-dashed border-border bg-card">
+            <p
+              className="text-xl italic text-muted-foreground mb-4"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            >
+              No briefing yet — the press is quiet.
+            </p>
+            <p className="text-sm font-sans text-muted-foreground mb-6">
+              Add some newsletter sources, sync your inbox, and generate your first edition!
+            </p>
             {authStatus?.connected && (
-              <Button 
-                variant="outline" 
-                className="mt-4"
+              <button
                 onClick={() => generateMutation.mutate({ data: {} })}
                 disabled={generateMutation.isPending}
+                className="border-2 border-primary bg-primary text-primary-foreground px-6 py-2.5 font-sans text-sm font-semibold uppercase tracking-wider hover:bg-primary/90 transition-colors disabled:opacity-40"
               >
-                Generate First Digest
-              </Button>
+                {generateMutation.isPending ? "Writing…" : "Generate First Briefing"}
+              </button>
             )}
-          </Card>
+          </div>
         )}
       </div>
 
+      {/* Footer nudge */}
+      <div className="mt-14 pt-6 border-t-[3px] border-double border-foreground text-center">
+        <p
+          className="text-lg italic text-muted-foreground"
+          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+        >
+          Add your favourite newsletters in{" "}
+          <Link href="/senders">
+            <span className="font-bold text-primary border-b border-primary hover:text-foreground transition-colors cursor-pointer">
+              My Sources
+            </span>
+          </Link>{" "}
+          to get started →
+        </p>
+      </div>
     </div>
-  );
-}
-
-function StatCard({ title, value, icon: Icon, isLoading }: { title: string, value?: number, icon: any, isLoading: boolean }) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground font-mono uppercase tracking-wider">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <Skeleton className="h-7 w-16" />
-        ) : (
-          <div className="text-2xl font-bold font-mono">{value?.toLocaleString() || 0}</div>
-        )}
-      </CardContent>
-    </Card>
   );
 }
