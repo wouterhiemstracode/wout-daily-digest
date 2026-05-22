@@ -123,12 +123,12 @@ export default function Senders() {
                   <div className="h-9 w-9 border border-border bg-card flex items-center justify-center shrink-0 group-hover:border-primary transition-colors">
                     <Mail className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-sm text-foreground" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-sm text-foreground truncate" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
                       {sender.name || sender.email}
                     </h3>
                     <div className="flex items-center gap-2 font-sans text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">
-                      <span>{sender.email}</span>
+                      <span className="truncate max-w-[180px] sm:max-w-none">{sender.email}</span>
                       {sender.emailCount > 0 && (
                         <>
                           <span>·</span>

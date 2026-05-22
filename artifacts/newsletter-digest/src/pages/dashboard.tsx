@@ -69,18 +69,29 @@ export default function Dashboard() {
       </div>
 
       {/* Masthead */}
-      <div className="text-center border-b-[6px] border-double border-foreground pb-8 mb-8">
-        <div className="flex items-center justify-center gap-6 mb-4">
+      <div className="text-center border-b-[6px] border-double border-foreground pb-6 mb-8">
+        {/* Mobile: stacked */}
+        <div className="flex flex-col items-center gap-2 sm:hidden mb-3">
+          <img src="/coffee-cup.png" alt="Coffee cup" className="w-16 h-16 opacity-85" />
+          <h1
+            className="text-5xl font-black text-primary uppercase tracking-tight leading-none"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+          >
+            Wout's Daily Digest
+          </h1>
+        </div>
+        {/* Desktop: side by side */}
+        <div className="hidden sm:flex items-center justify-center gap-6 mb-4">
           <img src="/coffee-cup.png" alt="Coffee cup" className="w-24 h-24 opacity-85" />
           <h1
-            className="text-6xl sm:text-7xl lg:text-8xl font-black text-primary uppercase tracking-tight leading-none"
+            className="text-7xl lg:text-8xl font-black text-primary uppercase tracking-tight leading-none"
             style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
           >
             Wout's Daily Digest
           </h1>
         </div>
         <p
-          className="text-xl sm:text-2xl italic text-muted-foreground"
+          className="text-lg sm:text-2xl italic text-muted-foreground"
           style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
         >
           Your morning intelligence, beautifully curated.

@@ -102,10 +102,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </header>
 
         <div className="flex-1 overflow-y-auto bg-background">
-          <div className="max-w-5xl mx-auto w-full px-4 py-8 md:px-10 md:py-10">
+          <div className="max-w-5xl mx-auto w-full px-4 py-6 pb-24 md:pb-10 md:px-10 md:py-10">
             {children}
           </div>
         </div>
+
+        {/* Mobile bottom nav */}
+        <nav className="md:hidden fixed bottom-0 inset-x-0 bg-sidebar border-t-2 border-foreground flex z-50">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
+            return (
+              <Link key={item.href} href={item.href} className="flex-1">
+                <div className={`flex flex-col items-center justify-center py-2.5 gap-1 transition-colors ${
+                  isActive ? "text-primary" : "text-muted-foreground"
+                }`}>
+                  <Icon className="h-5 w-5" />
+                  <span className="text-[9px] font-sans uppercase tracking-wider font-semibold leading-none">
+                    {item.label === "Today's Briefing" ? "Briefing" :
+                     item.label === "Past Editions" ? "Archive" :
+                     item.label === "My Sources" ? "Sources" : item.label}
+                  </span>
+                  {isActive && <div className="absolute top-0 h-0.5 w-8 bg-primary" />}
+                </div>
+              </Link>
+            );
+          })}
+        </nav>
       </main>
     </div>
   );
