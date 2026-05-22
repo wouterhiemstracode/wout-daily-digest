@@ -1,0 +1,12 @@
+.morning-bg {
+  background-color: #FFFBF5;
+}
+.text-accent-morning {
+  color: #F59E0B;
+}
+.bg-accent-morning {
+  background-color: #F59E0B;
+}
+.bg-accent-morning:hover {
+  background-color: #D97706; /* slightly darker amber */
+}
