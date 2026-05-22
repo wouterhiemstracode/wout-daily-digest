@@ -74,20 +74,20 @@ export default function Dashboard() {
         <div className="flex flex-col items-center gap-2 sm:hidden mb-3">
           <img src="/coffee-cup.png" alt="Coffee cup" className="w-16 h-16 opacity-85" />
           <h1
-            className="text-5xl text-primary leading-none"
-            style={{ fontFamily: "'UnifrakturMaguntia', 'Playfair Display', Georgia, serif", fontWeight: 400 }}
+            className="text-5xl font-black text-primary uppercase tracking-tight leading-none"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
           >
-            The Wout Street Journal
+            Wout's Daily Digest
           </h1>
         </div>
         {/* Desktop: side by side */}
         <div className="hidden sm:flex items-center justify-center gap-6 mb-4">
           <img src="/coffee-cup.png" alt="Coffee cup" className="w-24 h-24 opacity-85" />
           <h1
-            className="text-7xl lg:text-8xl text-primary leading-none"
-            style={{ fontFamily: "'UnifrakturMaguntia', 'Playfair Display', Georgia, serif", fontWeight: 400 }}
+            className="text-7xl lg:text-8xl font-black text-primary uppercase tracking-tight leading-none"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
           >
-            The Wout Street Journal
+            Wout's Daily Digest
           </h1>
         </div>
         <p

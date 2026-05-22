@@ -24,10 +24,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="px-5 py-6 border-b-[3px] border-double border-foreground text-center">
           <img src="/coffee-cup.png" alt="Coffee cup" className="w-14 h-14 mx-auto mb-1 opacity-85" />
           <div
-            className="text-xl font-black text-primary leading-tight tracking-tight uppercase"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            className="text-2xl text-primary leading-tight"
+            style={{ fontFamily: "'UnifrakturMaguntia', Georgia, serif", fontWeight: 400 }}
           >
-            Wout's<br />Daily Digest
+            The Wout<br />Street Journal
           </div>
           <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-2 font-sans">
             Morning Edition
@@ -93,10 +93,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2">
             <img src="/coffee-cup.png" alt="Coffee cup" className="w-7 h-7 opacity-85" />
             <span
-              className="font-black text-primary text-base uppercase tracking-tight"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+              className="text-primary text-lg leading-none"
+              style={{ fontFamily: "'UnifrakturMaguntia', Georgia, serif", fontWeight: 400 }}
             >
-              Wout's Daily Digest
+              The Wout Street Journal
             </span>
           </div>
         </header>
