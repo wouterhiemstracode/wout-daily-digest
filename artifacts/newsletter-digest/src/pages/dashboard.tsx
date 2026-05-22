@@ -94,7 +94,7 @@ export default function Dashboard() {
           className="text-lg sm:text-2xl italic text-muted-foreground"
           style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
         >
-          Your morning intelligence, beautifully curated.
+          Refined, intelligent, easy on the eyes — and the news is solid too.
         </p>
       </div>
 
