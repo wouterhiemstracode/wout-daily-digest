@@ -68,7 +68,7 @@ export default function DigestView() {
           className="text-4xl sm:text-5xl font-black text-primary uppercase tracking-tight leading-tight"
           style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
         >
-          ☕ Wout's Daily Digest
+          Wout's Daily Digest
         </h1>
         <div className="flex items-center justify-center gap-4 mt-3 font-sans text-[11px] uppercase tracking-widest text-muted-foreground">
           <span>{format(new Date(digest.date), "EEEE, MMMM d, yyyy")}</span>

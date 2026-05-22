@@ -22,7 +22,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Masthead */}
         <div className="px-5 py-6 border-b-[3px] border-double border-foreground text-center">
-          <div className="text-2xl mb-1">☕</div>
+          <img src="/coffee-cup.png" alt="Coffee cup" className="w-14 h-14 mx-auto mb-1 opacity-85" />
           <div
             className="text-xl font-black text-primary leading-tight tracking-tight uppercase"
             style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
@@ -91,7 +91,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* Mobile header */}
         <header className="md:hidden border-b-2 border-foreground bg-sidebar px-4 py-3 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <span className="text-lg">☕</span>
+            <img src="/coffee-cup.png" alt="Coffee cup" className="w-7 h-7 opacity-85" />
             <span
               className="font-black text-primary text-base uppercase tracking-tight"
               style={{ fontFamily: "'Playfair Display', Georgia, serif" }}

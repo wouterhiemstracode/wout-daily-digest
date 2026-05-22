@@ -70,12 +70,15 @@ export default function Dashboard() {
 
       {/* Masthead */}
       <div className="text-center border-b-[6px] border-double border-foreground pb-8 mb-8">
-        <h1
-          className="text-6xl sm:text-7xl lg:text-8xl font-black text-primary uppercase tracking-tight leading-none mb-4"
-          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-        >
-          ☕ Wout's Daily Digest
-        </h1>
+        <div className="flex items-center justify-center gap-6 mb-4">
+          <img src="/coffee-cup.png" alt="Coffee cup" className="w-24 h-24 opacity-85" />
+          <h1
+            className="text-6xl sm:text-7xl lg:text-8xl font-black text-primary uppercase tracking-tight leading-none"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+          >
+            Wout's Daily Digest
+          </h1>
+        </div>
         <p
           className="text-xl sm:text-2xl italic text-muted-foreground"
           style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
