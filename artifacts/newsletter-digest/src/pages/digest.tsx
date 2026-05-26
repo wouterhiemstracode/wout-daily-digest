@@ -58,8 +58,9 @@ export default function DigestView() {
   const howIAISection = digest.sections.find((s) => s.sectionType === "how_i_ai");
   const howIAIStory = howIAISection?.stories[0] ?? null;
   const top5 = topSection?.stories.slice(0, 5) ?? [];
+  const jobsSection = digest.sections.find((s) => s.sectionType === "jobs");
   const restSections = digest.sections.filter(
-    (s) => s.sectionType !== "top_stories" && s.sectionType !== "how_i_ai" && s.stories.length > 0
+    (s) => s.sectionType !== "top_stories" && s.sectionType !== "how_i_ai" && s.sectionType !== "jobs" && s.stories.length > 0
   );
 
   return (
@@ -343,6 +344,55 @@ export default function DigestView() {
           )}
         </div>
       </div>
+
+      {/* Job Openings */}
+      {jobsSection && jobsSection.stories.length > 0 && (
+        <div className="mt-10">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="flex-1 h-px bg-border"></span>
+            <h2 className="text-[11px] font-sans font-bold uppercase tracking-[0.2em] text-primary whitespace-nowrap">
+              Job Openings
+            </h2>
+            <span className="flex-1 h-px bg-border"></span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {jobsSection.stories.slice(0, 5).map((job) => (
+              <div key={job.id} className="border border-border p-4 bg-card hover:border-primary/40 transition-colors">
+                <p className="text-[11px] font-sans font-bold uppercase tracking-widest text-primary/60 mb-1">
+                  {job.sourceName ?? "Newsletter"}
+                </p>
+                <p className="text-sm font-semibold text-primary leading-snug mb-2"
+                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                  {job.headline}
+                </p>
+                <p className="text-[12px] leading-relaxed text-foreground/65 mb-3">{job.summary}</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => feedbackMutation.mutate({ data: { storyId: job.id, rating: 'up' } })}
+                      className={`p-1 transition-colors ${job.userFeedback === 'up' ? 'text-green-700' : 'text-muted-foreground hover:text-green-700'}`}
+                    >
+                      <ThumbsUp className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => feedbackMutation.mutate({ data: { storyId: job.id, rating: 'down' } })}
+                      className={`p-1 transition-colors ${job.userFeedback === 'down' ? 'text-destructive' : 'text-muted-foreground hover:text-destructive'}`}
+                    >
+                      <ThumbsDown className="h-3 w-3" />
+                    </button>
+                  </div>
+                  {job.sourceUrl && (
+                    <a href={job.sourceUrl} target="_blank" rel="noopener noreferrer"
+                      className="text-[10px] font-sans uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                      Apply <ExternalLink className="h-2.5 w-2.5" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="mt-12 pt-6 border-t-[3px] border-double border-foreground text-center">

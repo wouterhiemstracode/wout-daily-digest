@@ -25,7 +25,7 @@ export interface ProcessedStory {
 export interface DigestOutput {
   intro: string;
   sections: {
-    type: "top_stories" | "funding_ipos" | "ai_software" | "trends" | "takeaways" | "watch" | "links";
+    type: "top_stories" | "funding_ipos" | "ai_software" | "trends" | "takeaways" | "watch" | "links" | "how_i_ai" | "jobs";
     title: string;
     stories: ProcessedStory[];
   }[];
@@ -149,6 +149,7 @@ SECTION TYPES:
 - watch: Things moving that are worth keeping an eye on this week
 - links: Genuinely useful articles, tools, or resources (not promotional)
 - how_i_ai: SPECIAL — only use this if Lenny's Newsletter contains a "How I AI" feature. Extract that specific feature as a single story. The headline should be the person's name and role (e.g. "Sarah Chen, Head of Growth at Acme"). The summary should explain what they shared about using AI. The takeaways should be their 1-3 most useful AI tips or habits. If there is no "How I AI" feature in Lenny's Newsletter today, do not create a how_i_ai story.
+- jobs: Job openings mentioned in any newsletter. Each story = one job. Headline format: "Role · Company · Location". Summary: 1-2 sentences on what the role is and why it's interesting. Only include roles relevant to Wout's world (GTM, revenue, growth, AI, product, SaaS leadership — no engineering or unrelated roles). Max 5 jobs total. If no relevant jobs are mentioned, skip this section entirely.
 
 For each story output:
 - headline: 6-8 words, tells the full story directly — no teasing
@@ -220,6 +221,7 @@ function buildDigestFromStories(stories: ProcessedStory[], intro = ""): DigestOu
     { type: "watch" as const, title: "Things To Watch" },
     { type: "links" as const, title: "Useful Links" },
     { type: "how_i_ai" as const, title: "How I AI" },
+    { type: "jobs" as const, title: "Job Openings" },
   ];
 
   const sortedAll = [...stories].sort((a, b) => b.relevanceScore - a.relevanceScore);

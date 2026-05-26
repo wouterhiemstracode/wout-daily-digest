@@ -7,6 +7,7 @@ import digestsRouter from "./digests";
 import feedbackRouter from "./feedback";
 import searchRouter from "./search";
 import statsRouter from "./stats";
+import webhooksRouter from "./webhooks";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use("/digests", digestsRouter);
 router.use("/feedback", feedbackRouter);
 router.use("/search", searchRouter);
 router.use("/stats", statsRouter);
+router.use("/webhooks", webhooksRouter);
 
 export default router;
