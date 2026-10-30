@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PhoneDeck } from "@/components/press/phone-deck";
 import { Croc, useCrocProp, useNightEdition } from "@/components/press/croc";
+import { Dragonfly, LilyPad, PEEK_LOOKS, Reeds, Wading, Water } from "@/components/press/habitat";
 import { PressButton, SectionHeader } from "@/components/press/primitives";
 import { SortCard } from "@/components/press/sort-card";
 import { ReadingListItem, SenderRow, SectionTile } from "@/components/press/stories";
@@ -216,7 +217,22 @@ export default function Today() {
         </div>
       ) : !digest || stories.length === 0 ? (
         <div className="py-20 text-center">
-          <Croc mood={night ? "sleepy" : "hello"} pose="card" prop={crocProp} className="mx-auto w-36 mb-6" />
+          {/* Peek's pond: he leaps out for the first briefing, and dozes in it at night. */}
+          <div aria-hidden className="relative mx-auto mb-6 h-[170px] w-[440px] max-w-full">
+            <Reeds className="absolute left-0 bottom-[22px] h-[150px] w-[84px]" />
+            <Reeds flip rushes={1} className="absolute right-2 bottom-[22px] h-[120px] w-[70px]" />
+            <Water className="absolute inset-x-[34px] bottom-0 h-[60px]" style={{ borderRadius: "0 0 50% 50% / 0 0 100% 100%" }} />
+            <LilyPad flower className="absolute left-[92px] bottom-[18px] w-14" />
+            <LilyPad flip className="absolute right-[100px] bottom-[30px] w-9" />
+            {night ? (
+              <Wading look={{ ...PEEK_LOOKS.dozer, prop: crocProp }} className="absolute left-1/2 -translate-x-1/2 bottom-[52px] w-[150px]" />
+            ) : (
+              <>
+                <Croc {...PEEK_LOOKS.leaper} prop={crocProp} className="absolute left-1/2 -translate-x-1/2 bottom-[30px] w-[190px]" />
+                <Dragonfly className="absolute left-[70px] top-2 w-9" />
+              </>
+            )}
+          </div>
           <div className="t-meta">The press is quiet</div>
           <h2 className="t-h1 mt-3">No briefing yet</h2>
           <p className="t-standfirst mt-3 max-w-[48ch] mx-auto">
