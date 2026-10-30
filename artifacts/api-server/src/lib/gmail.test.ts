@@ -1,7 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-
-vi.mock("@replit/connectors-sdk", () => ({ ReplitConnectors: class {} }));
-const { isNewsletter, parseFrom } = await import("./gmail");
+import { describe, expect, it } from "vitest";
+import { isNewsletter, parseFrom } from "./gmail";
 
 const h = (from: string, subject: string, extra: Record<string, string> = {}) => [
   { name: "From", value: from },

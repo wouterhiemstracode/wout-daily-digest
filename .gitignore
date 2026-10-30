@@ -44,10 +44,15 @@ Thumbs.db
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
 
-# Replit
+# Local caches
 .cache/
 .local/
 
 # Playwright output
 test-results/
 playwright-report/
+
+# Local secrets
+.env
+.env.*
+!.env.example

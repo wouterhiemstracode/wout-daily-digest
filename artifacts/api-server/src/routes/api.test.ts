@@ -16,50 +16,82 @@ const INBOX = [
   { id: "m5", from: "Muted Weekly <muted@example.com>", subject: "This week in muted", list: true, body: "Muted content." },
 ];
 
-vi.mock("@replit/connectors-sdk", () => ({
-  ReplitConnectors: class {
-    async proxy(_service: string, path: string) {
-      const json = (data: unknown) => new Response(JSON.stringify(data), { status: 200 });
-      if (path.endsWith("/profile")) return json({ emailAddress: "wout@example.com" });
-      if (path.includes("/messages?")) {
-        const q = decodeURIComponent(path.split("q=")[1]!.split("&")[0]!);
-        const from = q.match(/from:(\S+)/)?.[1];
-        const ids = INBOX.filter((m) => !from || m.from.includes(from)).map((m) => ({ id: m.id }));
-        return json({ messages: ids });
-      }
-      const m = INBOX.find((x) => path.includes(`/messages/${x.id}?`))!;
-      const headers = [
-        { name: "From", value: m.from },
-        { name: "Subject", value: m.subject },
-        { name: "Date", value: new Date().toUTCString() },
-        ...(m.list ? [{ name: "List-Unsubscribe", value: "<https://example.com/u>" }] : []),
-      ];
-      return json({ payload: { headers, mimeType: "text/plain", body: { data: b64(m.body) } } });
-    }
-  },
-}));
+// Google's OAuth and Gmail endpoints, answered in-process. Access tokens: "at-wout" and its
+// refreshed successor "at-wout-2" belong to the allowed account; "at-stranger" to someone else.
+const google = { refreshes: 0 };
+const realFetch = globalThis.fetch;
+vi.stubGlobal("fetch", async (input: string | URL | Request, init?: RequestInit) => {
+  const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url);
+  const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status });
+  const bearer = new Headers(init?.headers).get("authorization")?.replace("Bearer ", "");
 
-vi.mock("@workspace/integrations-openai-ai-server", () => ({
-  openai: {
-    chat: {
-      completions: {
-        create: async () => ({
-          choices: [{ message: { content: JSON.stringify({
-            intro: "Good evening. Two stories tonight.",
-            stories: [
-              { headline: "AI agents are becoming a workflow", summary: "s1", whyItMatters: "w1", takeaways: ["t1"],
-                body: ["Paragraph one.", "Paragraph two."], pullQuote: "The interesting surface is no longer the prompt box.",
-                sourceName: "Lenny's Newsletter", sourceUrl: null, relevanceScore: 90, section: "product" },
-              { headline: "What platform teams measure", summary: "s2", whyItMatters: "w2", takeaways: [],
-                body: ["Only paragraph."], pullQuote: "Made-up words nobody wrote down.",
-                sourceName: "The Pragmatic Engineer", sourceUrl: null, relevanceScore: 70, section: "engineering" },
-              { headline: "Senior Product Designer", summary: "s3", whyItMatters: "w3", takeaways: [], body: [],
-                pullQuote: null, sourceName: "Lenny's Newsletter", sourceUrl: null, relevanceScore: 60, section: "jobs" },
-            ],
-          }) } }],
-        }),
+  if (url.host === "oauth2.googleapis.com") {
+    const form = new URLSearchParams(String(init?.body));
+    if (form.get("grant_type") === "refresh_token") {
+      google.refreshes++;
+      return json({ access_token: "at-wout-2", expires_in: 3600 });
+    }
+    const gmail = "openid email https://www.googleapis.com/auth/gmail.readonly";
+    const byCode: Record<string, object> = {
+      wout: { access_token: "at-wout", refresh_token: "rt-wout", expires_in: 3600, scope: gmail },
+      stranger: { access_token: "at-stranger", refresh_token: "rt-x", expires_in: 3600, scope: gmail },
+    };
+    return byCode[form.get("code")!] ? json(byCode[form.get("code")!]) : json({ error: "invalid_grant" }, 400);
+  }
+  if (url.host === "openidconnect.googleapis.com") {
+    const email = bearer === "at-stranger" ? "stranger@example.com" : "Wout@Example.com";
+    return json({ email, email_verified: true });
+  }
+  if (url.host === "gmail.googleapis.com") {
+    if (bearer !== "at-wout" && bearer !== "at-wout-2") return json({ error: "unauthorized" }, 401);
+    const path = url.pathname + url.search;
+    if (url.pathname.endsWith("/messages")) {
+      const from = url.searchParams.get("q")!.match(/from:(\S+)/)?.[1];
+      return json({ messages: INBOX.filter((m) => !from || m.from.includes(from)).map((m) => ({ id: m.id })) });
+    }
+    const m = INBOX.find((x) => path.includes(`/messages/${x.id}?`))!;
+    const headers = [
+      { name: "From", value: m.from },
+      { name: "Subject", value: m.subject },
+      { name: "Date", value: new Date().toUTCString() },
+      ...(m.list ? [{ name: "List-Unsubscribe", value: "<https://example.com/u>" }] : []),
+    ];
+    return json({ payload: { headers, mimeType: "text/plain", body: { data: b64(m.body) } } });
+  }
+  return realFetch(input, init);
+});
+
+// Claude, as the SDK's beta stream returns it once the structured output is parsed.
+const claude = { requests: [] as any[] };
+vi.mock("@anthropic-ai/sdk", () => ({
+  default: class {
+    beta = {
+      messages: {
+        stream: (params: unknown) => {
+          claude.requests.push(params);
+          return {
+            finalMessage: async () => ({
+              model: "claude-opus-5-5",
+              stop_reason: "end_turn",
+              usage: {},
+              parsed_output: {
+                intro: "Good evening. Two stories tonight.",
+                stories: [
+                  { headline: "AI agents are becoming a workflow", summary: "s1", whyItMatters: "w1", takeaways: ["t1"],
+                    body: ["Paragraph one.", "Paragraph two."], pullQuote: "The interesting surface is no longer the prompt box.",
+                    sourceName: "Lenny's Newsletter", sourceUrl: null, relevanceScore: 90, section: "product" },
+                  { headline: "What platform teams measure", summary: "s2", whyItMatters: "w2", takeaways: [],
+                    body: ["Only paragraph."], pullQuote: "Made-up words nobody wrote down.",
+                    sourceName: "The Pragmatic Engineer", sourceUrl: null, relevanceScore: 70, section: "engineering" },
+                  { headline: "Senior Product Designer", summary: "s3", whyItMatters: "w3", takeaways: [], body: [],
+                    pullQuote: null, sourceName: "Lenny's Newsletter", sourceUrl: null, relevanceScore: 60, section: "jobs" },
+                ],
+              },
+            }),
+          };
+        },
       },
-    },
+    };
   },
 }));
 
@@ -68,17 +100,52 @@ const enabled = !!process.env["TEST_DATABASE_URL"];
 describe.skipIf(!enabled)("api (needs TEST_DATABASE_URL)", async () => {
   const request = (await import("supertest")).default;
   const app = (await import("../app")).default;
-  const { db, pool, sendersTable } = await import("@workspace/db");
-  const { sql } = await import("drizzle-orm");
-  const api = request(app);
+  const { db, pool, sendersTable, gmailTokensTable, sql } = await import("@workspace/db");
+  const api = request.agent(app); // keeps the session cookie between requests
+
+  /** Run the Google sign-in redirects as a browser would; returns where it lands. */
+  const signIn = async (agent: ReturnType<typeof request.agent>, code: string, tamper = false) => {
+    const start = await agent.get("/api/auth/google/start").expect(302);
+    const state = new URL(start.headers["location"]).searchParams.get("state")!;
+    const done = await agent.get(`/api/auth/google/callback?code=${code}&state=${tamper ? "forged" : state}`).expect(302);
+    return done.headers["location"];
+  };
 
   beforeAll(async () => {
-    await db.execute(sql`truncate senders, emails, digests, feedback restart identity cascade`);
+    await db.execute(sql`truncate senders, emails, digests, feedback, gmail_tokens restart identity cascade`);
     await db.insert(sendersTable).values({ email: "muted@example.com", name: "Muted Weekly", active: false, autoDetected: true });
   });
   afterAll(() => pool.end());
 
   let mutedId = 0;
+
+  it("everything but sign-in and health needs a session", async () => {
+    await request(app).get("/api/healthz").expect(200);
+    await request(app).get("/api/digests/latest").expect(401);
+    await request(app).post("/api/emails/sync").expect(401);
+    const start = await request(app).get("/api/auth/google/start").expect(302);
+    const consent = new URL(start.headers["location"]);
+    expect(consent.host).toBe("accounts.google.com");
+    expect(consent.searchParams.get("scope")).toContain("gmail.readonly");
+    expect(consent.searchParams.get("redirect_uri")).toBe("http://localhost:8080/api/auth/google/callback");
+  });
+
+  it("someone not in ALLOWED_EMAILS can't sign in, and their Gmail isn't stored", async () => {
+    const stranger = request.agent(app);
+    expect(await signIn(stranger, "stranger")).toBe("/?signin=denied");
+    await stranger.get("/api/auth/me").expect(401);
+    expect(await db.select().from(gmailTokensTable)).toEqual([]);
+  });
+
+  it("a forged OAuth state is rejected", async () => {
+    expect(await signIn(request.agent(app), "wout", true)).toBe("/?signin=failed");
+  });
+
+  it("signing in with Google connects Gmail too", async () => {
+    expect(await signIn(api, "wout")).toBe("/");
+    expect((await api.get("/api/auth/me").expect(200)).body).toEqual({ email: "wout@example.com" });
+    expect((await api.get("/api/auth/gmail/status").expect(200)).body).toEqual({ connected: true, email: "wout@example.com" });
+  });
 
   it("sync finds the newsletters and adds their senders", async () => {
     const res = await api.post("/api/emails/sync").expect(200);
@@ -116,6 +183,10 @@ describe.skipIf(!enabled)("api (needs TEST_DATABASE_URL)", async () => {
     const stories = sections.flatMap((s) => s.stories);
     expect(stories.map((s: any) => s.headline)).toEqual(["AI agents are becoming a workflow", "What platform teams measure", "Senior Product Designer"]);
 
+    const [req] = claude.requests;
+    expect(req).toMatchObject({ model: "claude-opus-5-5", fallbacks: "default", betas: ["server-side-fallback-2026-07-01"] });
+    expect(req.messages[0].content).toContain("The interesting surface is no longer the prompt box.");
+
     const lead = stories[0];
     expect(lead.body).toEqual(["Paragraph one.", "Paragraph two."]);
     expect(lead.pullQuote).toBe("The interesting surface is no longer the prompt box.");
@@ -127,6 +198,17 @@ describe.skipIf(!enabled)("api (needs TEST_DATABASE_URL)", async () => {
     expect(latest.body.storyCount).toBe(3);
   });
 
+  it("an expired Gmail token is refreshed", async () => {
+    await db.update(gmailTokensTable).set({ expiresAt: new Date(Date.now() - 1000) });
+    expect((await api.get("/api/auth/gmail/status")).body.connected).toBe(true);
+    expect(google.refreshes).toBe(1);
+    expect((await db.select().from(gmailTokensTable))[0]!.accessToken).toBe("at-wout-2");
+  });
+
+  it("webhooks need their secret, not a session", async () => {
+    await request(app).post("/api/webhooks/funding").send([{ company: "Acme" }]).expect(401);
+  });
+
   it("feedback rates a story and 'none' clears it again", async () => {
     const rating = async () =>
       ((await api.get("/api/digests/latest")).body.sections as any[]).flatMap((s) => s.stories).find((s: any) => s.id === storyId).userFeedback;
@@ -136,5 +218,10 @@ describe.skipIf(!enabled)("api (needs TEST_DATABASE_URL)", async () => {
     await api.post("/api/feedback").send({ storyId, rating: "none" }).expect(201);
     expect(await rating()).toBeNull();
     await api.post("/api/feedback").send({ storyId, rating: "maybe" }).expect(400);
+  });
+
+  it("signing out ends the session", async () => {
+    await api.post("/api/auth/signout").expect(200);
+    await api.get("/api/digests/latest").expect(401);
   });
 });

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, sendersTable, emailsTable } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql } from "@workspace/db";
 import { CreateSenderBody, DeleteSenderParams, UpdateSenderBody, UpdateSenderParams } from "@workspace/api-zod";
 
 const router = Router();

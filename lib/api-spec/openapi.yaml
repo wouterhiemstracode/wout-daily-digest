@@ -38,6 +38,37 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
+  /auth/me:
+    get:
+      operationId: getSession
+      tags: [auth]
+      summary: Who is signed in
+      description: >-
+        Every other endpoint answers 401 until you sign in with Google at
+        /api/auth/google/start (a browser redirect, not part of this JSON API).
+      responses:
+        "200":
+          description: The signed-in account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "401":
+          description: Not signed in
+
+  /auth/signout:
+    post:
+      operationId: signOut
+      tags: [auth]
+      summary: Sign out
+      responses:
+        "200":
+          description: Signed out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
   /auth/gmail/url:
     get:
       operationId: getGmailAuthUrl
@@ -362,6 +393,14 @@ components:
           type: boolean
       required:
         - success
+
+    Session:
+      type: object
+      properties:
+        email:
+          type: string
+      required:
+        - email
 
     Sender:
       type: object

@@ -24,6 +24,7 @@ export * from './searchResults';
 export * from './sender';
 export * from './senderInput';
 export * from './senderUpdate';
+export * from './session';
 export * from './stats';
 export * from './story';
 export * from './storySearchResult';

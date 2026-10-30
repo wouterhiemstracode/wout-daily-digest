@@ -1,7 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-
-vi.mock("@workspace/integrations-openai-ai-server", () => ({ openai: {} }));
-const { buildDigestFromStories, cleanStory, isQuotedFrom } = await import("./ai-processor");
+import { describe, expect, it } from "vitest";
+import { buildDigestFromStories, cleanStory, isQuotedFrom } from "./ai-processor";
 
 const story = (headline: string, section: string, relevanceScore: number) =>
   cleanStory({ headline, section: section as never, relevanceScore, summary: "s", whyItMatters: "w" }, "");

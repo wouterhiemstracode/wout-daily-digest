@@ -23,6 +23,10 @@ export interface SuccessResponse {
   success: boolean;
 }
 
+export interface Session {
+  email: string;
+}
+
 export interface Sender {
   id: number;
   email: string;

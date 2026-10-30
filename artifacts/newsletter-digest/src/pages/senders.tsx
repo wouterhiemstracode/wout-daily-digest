@@ -6,6 +6,7 @@ import {
   useCreateSender,
   useUpdateSender,
   useGetGmailAuthStatus,
+  useSignOut,
   getListSendersQueryKey,
   type Sender,
 } from "@workspace/api-client-react";
@@ -25,6 +26,7 @@ export default function Senders() {
   const { data: senders, isLoading } = useListSenders();
   const { data: authStatus } = useGetGmailAuthStatus();
   const briefing = useBriefing();
+  const signOut = useSignOut();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const refresh = () => queryClient.invalidateQueries({ queryKey: getListSendersQueryKey() });
@@ -117,6 +119,18 @@ export default function Senders() {
           </button>
         )}
       </div>
+
+      {authStatus?.email && (
+        <p className="t-caption mt-12">
+          Signed in as {authStatus.email} ·{" "}
+          <button
+            className="underline underline-offset-2 hover:text-ink"
+            onClick={() => signOut.mutate(undefined, { onSuccess: () => window.location.assign(import.meta.env.BASE_URL) })}
+          >
+            Sign out
+          </button>
+        </p>
+      )}
     </div>
   );
 }

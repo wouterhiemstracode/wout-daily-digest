@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, storiesTable, digestSectionsTable, digestsTable } from "@workspace/db";
-import { eq, sql, ilike, or } from "drizzle-orm";
+import { eq, sql, ilike, or } from "@workspace/db";
 import { SearchDigestsQueryParams } from "@workspace/api-zod";
 
 const router = Router();

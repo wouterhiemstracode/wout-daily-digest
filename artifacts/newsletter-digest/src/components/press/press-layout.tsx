@@ -2,7 +2,7 @@ import * as React from "react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { Newspaper, Archive, Users, Search, Moon, Sun, LogOut } from "lucide-react";
-import { useGetGmailAuthStatus, useDisconnectGmail, useGetLatestDigest } from "@workspace/api-client-react";
+import { useGetGmailAuthStatus, useSignOut, useGetLatestDigest } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
 import { Masthead } from "./primitives";
 
@@ -80,7 +80,7 @@ export function PressSidebar({ footer, className }: { footer?: React.ReactNode; 
   const [location] = useLocation();
   const edition = useEditionLine();
   const { data: authStatus } = useGetGmailAuthStatus();
-  const disconnect = useDisconnectGmail();
+  const signOut = useSignOut();
 
   return (
     <aside className={cn("w-64 shrink-0 bg-side text-side-ink flex flex-col", className)}>
@@ -117,10 +117,10 @@ export function PressSidebar({ footer, className }: { footer?: React.ReactNode; 
               <span className="font-sans text-[13px] text-side-ink truncate">{authStatus.email}</span>
             </span>
             <button
-              onClick={() => disconnect.mutate(undefined, { onSuccess: () => window.location.reload() })}
+              onClick={() => signOut.mutate(undefined, { onSuccess: () => window.location.assign(import.meta.env.BASE_URL) })}
               className="text-side-ink-2 hover:text-side-ink"
-              aria-label="Disconnect Gmail"
-              title="Disconnect Gmail"
+              aria-label="Sign out"
+              title="Sign out"
             >
               <LogOut className="h-3.5 w-3.5" />
             </button>

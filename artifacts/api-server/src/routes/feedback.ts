@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, feedbackTable, storiesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq } from "@workspace/db";
 import { SubmitFeedbackBody } from "@workspace/api-zod";
 
 const router = Router();
