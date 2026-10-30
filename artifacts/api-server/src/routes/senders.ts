@@ -3,15 +3,19 @@ import { db, sendersTable, emailsTable } from "@workspace/db";
 import { eq, sql } from "@workspace/db";
 import { CreateSenderBody, DeleteSenderParams, UpdateSenderBody, UpdateSenderParams } from "@workspace/api-zod";
 
+import { loadPreferences, type Tally } from "../lib/preferences";
+
 const router = Router();
 
-function toSender(s: typeof sendersTable.$inferSelect, emailCount = 0) {
+function toSender(s: typeof sendersTable.$inferSelect, emailCount = 0, ratings: Tally = { kept: 0, skipped: 0 }) {
   return {
     id: s.id,
     email: s.email,
     name: s.name,
     active: s.active,
     autoDetected: s.autoDetected,
+    kept: ratings.kept,
+    skipped: ratings.skipped,
     emailCount,
     createdAt: s.createdAt.toISOString(),
   };
@@ -28,7 +32,8 @@ router.get("/", async (req, res) => {
 
   const countMap = new Map(counts.map((c) => [c.senderId, c.count]));
 
-  res.json(senders.map((s) => toSender(s, countMap.get(s.id) ?? 0)));
+  const { senders: ratings } = await loadPreferences();
+  res.json(senders.map((s) => toSender(s, countMap.get(s.id) ?? 0, ratings.get(s.id))));
 });
 
 router.post("/", async (req, res) => {
@@ -71,7 +76,7 @@ router.patch("/:id", async (req, res) => {
     .select({ count: sql<number>`count(*)::int` })
     .from(emailsTable)
     .where(eq(emailsTable.senderId, sender.id));
-  res.json(toSender(sender, counted?.count ?? 0));
+  res.json(toSender(sender, counted?.count ?? 0, (await loadPreferences()).senders.get(sender.id)));
 });
 
 router.delete("/:id", async (req, res) => {

@@ -3,6 +3,7 @@ import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import * as z from "zod/v4";
 import { parse } from "node-html-parser";
 import { logger } from "./logger";
+import { adjustedScore, emptyPreferences, preferencePrompt, type Preferences } from "./preferences";
 
 export interface EmailContent {
   senderId: number;
@@ -53,6 +54,8 @@ export interface ProcessedStory {
   takeaways: string[];
   body: string[];
   pullQuote: string | null;
+  /** The newsletter it came from, when the model's From address matches a sender. */
+  senderId: number | null;
   sourceUrl: string | null;
   sourceName: string | null;
   relevanceScore: number;
@@ -68,10 +71,6 @@ export interface DigestOutput {
   }[];
 }
 
-export interface FeedbackContext {
-  likedTopics: string[];
-  dislikedTopics: string[];
-}
 
 const MODEL = "claude-opus-5-5";
 // Newsletters are capped one by one, so a long issue can't crowd out the others.
@@ -95,6 +94,7 @@ const DigestResponse = z.object({
       pullQuote: z.string().nullable(),
       sourceUrl: z.string().nullable(),
       sourceName: z.string().nullable(),
+      fromEmail: z.string().nullable(),
       relevanceScore: z.number(),
       section: z.enum(SECTION_TYPES.filter((t) => t !== "top_stories") as [SectionType, ...SectionType[]]),
     }),
@@ -117,7 +117,7 @@ function truncate(text: string, maxChars: number): string {
 
 export async function processEmailsIntoDigest(
   emails: EmailContent[],
-  feedback?: FeedbackContext
+  prefs: Preferences = emptyPreferences(),
 ): Promise<DigestOutput> {
   if (emails.length === 0) {
     return buildEmptySections();
@@ -137,15 +137,7 @@ ${text}`;
 
   const combined = emailSummaries.join("\n\n");
 
-  let preferenceBlock = "";
-  if (feedback && (feedback.likedTopics.length > 0 || feedback.dislikedTopics.length > 0)) {
-    preferenceBlock = `
-LEARNED PREFERENCES (from Wout's past ratings — use these to adjust relevanceScore):
-- Previously enjoyed: ${feedback.likedTopics.length > 0 ? feedback.likedTopics.join(" | ") : "none yet"}
-- Previously disliked or skipped: ${feedback.dislikedTopics.length > 0 ? feedback.dislikedTopics.join(" | ") : "none yet"}
-Boost relevanceScore for stories similar to liked ones. Lower it for anything like the disliked ones.
-`;
-  }
+  const preferenceBlock = preferencePrompt(prefs, SECTION_TITLES);
 
   const systemPrompt = `You are Wout's personal morning editor. Your job is to read through all his newsletters, pull out exactly what's relevant to him, throw away everything that isn't, and present it in a warm, clear, friendly newspaper style — like a smart colleague who read everything so he didn't have to.
 
@@ -226,6 +218,7 @@ For each story output:
 - body: the full story for the reading view, 3-6 short paragraphs of 2-4 sentences each (1-2 paragraphs for links and jobs). Retell what the newsletter actually says, in the same plain style. Use ONLY facts, numbers, names and examples from the newsletter text. Never add outside knowledge or invent details.
 - pullQuote: one striking sentence copied WORD FOR WORD from the newsletter text, without quotation marks, or null. Never paraphrase or invent a quote.
 - sourceUrl: the most relevant URL mentioned in the content, or null
+- fromEmail: the "From:" address of the newsletter the story came from, copied exactly
 - sourceName: the newsletter or publication name (short form, e.g. "Lenny's Newsletter" not the full email)
 - relevanceScore: 1-100 based on how relevant and important this is to Wout's world. Only include stories scoring 35+.
 - section: one of the section types above
@@ -257,12 +250,16 @@ Return the intro and the stories in the requested JSON format.`;
   logger.info({ model: message.model, usage: message.usage }, "Briefing written");
 
   const sourceText = emailSummaries.join("\n");
-  const stories = message.parsed_output.stories.map((st) => cleanStory(st, sourceText));
+  const senderByEmail = new Map(emails.map((e) => [e.senderEmail.toLowerCase(), e.senderId]));
+  const stories = message.parsed_output.stories.map((st) => {
+    const story = cleanStory(st, sourceText, senderByEmail.get((st.fromEmail ?? "").toLowerCase()) ?? null);
+    return { ...story, relevanceScore: adjustedScore(story, prefs) };
+  });
   return buildDigestFromStories(stories, message.parsed_output.intro);
 }
 
 /** Normalise one story from the model, and drop a pull quote that isn't really in the newsletter. */
-export function cleanStory(s: Partial<ProcessedStory>, sourceText: string): ProcessedStory {
+export function cleanStory(s: Partial<ProcessedStory>, sourceText: string, senderId: number | null = null): ProcessedStory {
   const section = SECTION_TYPES.includes(s.section as SectionType) && s.section !== "top_stories" ? s.section! : "trends";
   const strings = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.trim() !== "") : []);
   return {
@@ -272,6 +269,7 @@ export function cleanStory(s: Partial<ProcessedStory>, sourceText: string): Proc
     takeaways: strings(s.takeaways),
     body: strings(s.body),
     pullQuote: s.pullQuote && isQuotedFrom(s.pullQuote, sourceText) ? s.pullQuote.trim() : null,
+    senderId,
     sourceUrl: s.sourceUrl ?? null,
     sourceName: s.sourceName ?? null,
     relevanceScore: Number(s.relevanceScore) || 0,

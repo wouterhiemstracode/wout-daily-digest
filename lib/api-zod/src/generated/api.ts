@@ -71,6 +71,8 @@ export const ListSendersResponseItem = zod.object({
   "name": zod.string().nullish(),
   "active": zod.boolean(),
   "autoDetected": zod.boolean().describe('Found in the inbox by sync rather than added by hand'),
+  "kept": zod.number().describe('Stories from this newsletter you kept in the last 90 days'),
+  "skipped": zod.number().describe('Stories from this newsletter you skipped in the last 90 days'),
   "emailCount": zod.number(),
   "createdAt": zod.string()
 })
@@ -103,6 +105,8 @@ export const UpdateSenderResponse = zod.object({
   "name": zod.string().nullish(),
   "active": zod.boolean(),
   "autoDetected": zod.boolean().describe('Found in the inbox by sync rather than added by hand'),
+  "kept": zod.number().describe('Stories from this newsletter you kept in the last 90 days'),
+  "skipped": zod.number().describe('Stories from this newsletter you skipped in the last 90 days'),
   "emailCount": zod.number(),
   "createdAt": zod.string()
 })

@@ -79,12 +79,12 @@ vi.mock("@anthropic-ai/sdk", () => ({
                 stories: [
                   { headline: "AI agents are becoming a workflow", summary: "s1", whyItMatters: "w1", takeaways: ["t1"],
                     body: ["Paragraph one.", "Paragraph two."], pullQuote: "The interesting surface is no longer the prompt box.",
-                    sourceName: "Lenny's Newsletter", sourceUrl: null, relevanceScore: 90, section: "product" },
+                    sourceName: "Lenny's Newsletter", fromEmail: "lenny@substack.com", sourceUrl: null, relevanceScore: 90, section: "product" },
                   { headline: "What platform teams measure", summary: "s2", whyItMatters: "w2", takeaways: [],
                     body: ["Only paragraph."], pullQuote: "Made-up words nobody wrote down.",
-                    sourceName: "The Pragmatic Engineer", sourceUrl: null, relevanceScore: 70, section: "engineering" },
+                    sourceName: "The Pragmatic Engineer", fromEmail: "pragmatic@substack.com", sourceUrl: null, relevanceScore: 70, section: "engineering" },
                   { headline: "Senior Product Designer", summary: "s3", whyItMatters: "w3", takeaways: [], body: [],
-                    pullQuote: null, sourceName: "Lenny's Newsletter", sourceUrl: null, relevanceScore: 60, section: "jobs" },
+                    pullQuote: null, sourceName: "Lenny's Newsletter", fromEmail: "LENNY@substack.com", sourceUrl: null, relevanceScore: 60, section: "jobs" },
                 ],
               },
             }),
@@ -218,6 +218,30 @@ describe.skipIf(!enabled)("api (needs TEST_DATABASE_URL)", async () => {
     await api.post("/api/feedback").send({ storyId, rating: "none" }).expect(201);
     expect(await rating()).toBeNull();
     await api.post("/api/feedback").send({ storyId, rating: "maybe" }).expect(400);
+  });
+
+  it("learns from keeps and skips: per newsletter and section, in the prompt and the scores", async () => {
+    // Three editions where every Lenny story is kept and every Pragmatic Engineer story skipped.
+    for (let i = 0; i < 3; i++) {
+      const digest = (await api.post("/api/digests/generate").send({}).expect(200)).body;
+      for (const story of (digest.sections as any[]).flatMap((s) => s.stories)) {
+        const rating = story.sourceName === "Lenny's Newsletter" ? "up" : "down";
+        await api.post("/api/feedback").send({ storyId: story.id, rating }).expect(201);
+      }
+    }
+
+    const next = (await api.post("/api/digests/generate").send({}).expect(200)).body;
+    const system = claude.requests.at(-1).system as string;
+    expect(system).toContain("By newsletter: Lenny's Newsletter kept 6 of 6; The Pragmatic Engineer kept 0 of 3");
+    expect(system).toContain("By section: Job Openings kept 3 of 3; Product & Design kept 3 of 3; Engineering & AI kept 0 of 3");
+
+    // The model scored them 90 / 70 / 60; history moves them by up to ±20.
+    const scores = Object.fromEntries((next.sections as any[]).flatMap((s) => s.stories).map((s: any) => [s.headline, s.relevanceScore]));
+    expect(scores).toEqual({ "AI agents are becoming a workflow": 100, "What platform teams measure": 52, "Senior Product Designer": 80 });
+
+    const senders = (await api.get("/api/senders").expect(200)).body as any[];
+    expect(senders.find((s) => s.email === "lenny@substack.com")).toMatchObject({ kept: 6, skipped: 0 });
+    expect(senders.find((s) => s.email === "pragmatic@substack.com")).toMatchObject({ kept: 0, skipped: 3 });
   });
 
   it("signing out ends the session", async () => {

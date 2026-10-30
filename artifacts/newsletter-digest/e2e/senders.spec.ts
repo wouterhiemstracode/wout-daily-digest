@@ -7,6 +7,8 @@ test("My sources lists found newsletters with switches", async ({ page }) => {
   await expect(page.getByText("5 of 6 on")).toBeVisible();
   await expect(page.getByText("found in Gmail").first()).toBeVisible();
   await expect(page.getByText("added by you")).toBeVisible();
+  await expect(page.getByText("kept 8 of 10")).toBeVisible(); // Lenny's: kept often
+  await expect(page.getByText("kept 1 of 6")).toBeVisible(); // The Batch: mostly skipped
 
   await page.getByRole("switch", { name: "Include The Batch in my briefing" }).click();
   await expect.poll(() => api.senderUpdates).toEqual([{ id: 3, active: false }]);

@@ -1,4 +1,5 @@
 import { pgTable, serial, text, integer, timestamp, date, jsonb } from "drizzle-orm/pg-core";
+import { sendersTable } from "./senders";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -27,6 +28,10 @@ export const storiesTable = pgTable("stories", {
   whyItMatters: text("why_it_matters").notNull(),
   sourceUrl: text("source_url"),
   sourceName: text("source_name"),
+  // Which newsletter the story came from, and its own section (Top Stories hides that);
+  // both feed the preference learning.
+  senderId: integer("sender_id").references(() => sendersTable.id, { onDelete: "set null" }),
+  topic: text("topic"),
   relevanceScore: integer("relevance_score").notNull().default(50),
   sortOrder: integer("sort_order").notNull().default(0),
   userFeedback: text("user_feedback"), // up | down | null (undo clears it)

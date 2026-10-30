@@ -11,7 +11,8 @@ import {
   gte,
   inArray,
 } from "@workspace/db";
-import { processEmailsIntoDigest, type EmailContent, type FeedbackContext } from "./ai-processor";
+import { processEmailsIntoDigest, type EmailContent } from "./ai-processor";
+import { loadPreferences } from "./preferences";
 import { discoverNewsletters, fetchEmailsForSender, fetchMessage, getGmailStatus, type GmailMessage, type NewsletterRef } from "./gmail";
 
 /*
@@ -114,26 +115,6 @@ export async function writeDigest(hoursBack = 24) {
     .where(gte(emailsTable.receivedAt, since))
     .orderBy(desc(emailsTable.receivedAt));
 
-  // Build feedback context from past story ratings
-  const likedStories = await db
-    .select({ headline: storiesTable.headline, sourceName: storiesTable.sourceName })
-    .from(storiesTable)
-    .where(eq(storiesTable.userFeedback, "up"))
-    .orderBy(desc(storiesTable.createdAt))
-    .limit(30);
-
-  const dislikedStories = await db
-    .select({ headline: storiesTable.headline, sourceName: storiesTable.sourceName })
-    .from(storiesTable)
-    .where(eq(storiesTable.userFeedback, "down"))
-    .orderBy(desc(storiesTable.createdAt))
-    .limit(30);
-
-  const feedback: FeedbackContext = {
-    likedTopics: likedStories.map((s) => s.headline).filter(Boolean),
-    dislikedTopics: dislikedStories.map((s) => s.headline).filter(Boolean),
-  };
-
   const emailContent: EmailContent[] = emails.map((e) => ({
     senderId: e.senderId,
     senderEmail: e.senderEmail ?? "",
@@ -150,48 +131,50 @@ export async function writeDigest(hoursBack = 24) {
     .returning();
 
   try {
-  const output = await processEmailsIntoDigest(emailContent, feedback);
+    const output = await processEmailsIntoDigest(emailContent, await loadPreferences());
 
-  await db.update(digestsTable).set({ intro: output.intro || null }).where(eq(digestsTable.id, digest!.id));
+    await db.update(digestsTable).set({ intro: output.intro || null }).where(eq(digestsTable.id, digest!.id));
 
-  for (let i = 0; i < output.sections.length; i++) {
-    const section = output.sections[i]!;
-    if (section.stories.length === 0) continue;
+    for (let i = 0; i < output.sections.length; i++) {
+      const section = output.sections[i]!;
+      if (section.stories.length === 0) continue;
 
-    const [sec] = await db
-      .insert(digestSectionsTable)
-      .values({
-        digestId: digest!.id,
-        sectionType: section.type,
-        title: section.title,
-        sortOrder: i,
-      })
-      .returning();
+      const [sec] = await db
+        .insert(digestSectionsTable)
+        .values({
+          digestId: digest!.id,
+          sectionType: section.type,
+          title: section.title,
+          sortOrder: i,
+        })
+        .returning();
 
-    for (let j = 0; j < section.stories.length; j++) {
-      const story = section.stories[j]!;
-      await db.insert(storiesTable).values({
-        sectionId: sec!.id,
-        headline: story.headline,
-        summary: story.summary,
-        whyItMatters: story.whyItMatters,
-        takeaways: story.takeaways ?? [],
-        body: story.body,
-        pullQuote: story.pullQuote,
-        sourceUrl: story.sourceUrl,
-        sourceName: story.sourceName,
-        relevanceScore: story.relevanceScore,
-        sortOrder: j,
-      });
+      for (let j = 0; j < section.stories.length; j++) {
+        const story = section.stories[j]!;
+        await db.insert(storiesTable).values({
+          sectionId: sec!.id,
+          headline: story.headline,
+          summary: story.summary,
+          whyItMatters: story.whyItMatters,
+          takeaways: story.takeaways ?? [],
+          body: story.body,
+          pullQuote: story.pullQuote,
+          senderId: story.senderId,
+          topic: story.section,
+          sourceUrl: story.sourceUrl,
+          sourceName: story.sourceName,
+          relevanceScore: story.relevanceScore,
+          sortOrder: j,
+        });
+      }
     }
-  }
 
-  await db.update(digestsTable).set({ status: "ready" }).where(eq(digestsTable.id, digest!.id));
+    await db.update(digestsTable).set({ status: "ready" }).where(eq(digestsTable.id, digest!.id));
 
-  await db
-    .update(emailsTable)
-    .set({ processed: true })
-    .where(gte(emailsTable.receivedAt, since));
+    await db
+      .update(emailsTable)
+      .set({ processed: true })
+      .where(gte(emailsTable.receivedAt, since));
 
   } catch (err) {
     await db.update(digestsTable).set({ status: "error" }).where(eq(digestsTable.id, digest!.id));
