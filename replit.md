@@ -9,7 +9,17 @@ An AI-powered Gmail newsletter aggregator that scans your newsletters, removes n
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
+- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only; run it after pulling this branch: new columns `stories.body`, `stories.pull_quote`, `senders.auto_detected`)
+- `pnpm --filter @workspace/scripts run seed-demo` — write a sample edition (no Gmail or OpenAI needed)
+
+### Tests
+
+- `pnpm --filter @workspace/api-server run test` — unit tests; with `TEST_DATABASE_URL` set (a throwaway Postgres with the schema pushed) also the API flow: sync → generate → feedback, with a fake inbox and model
+- `pnpm --filter @workspace/newsletter-digest run test:e2e` — Playwright: behaviour on desktop and phone, plus visual baselines of the v3 Dessn frames (`--update-snapshots` to accept an intended change)
+
+### Running locally outside Replit
+
+Start Postgres, push the schema, seed, then run the API with `PORT=8080` and the frontend with `API_URL=http://localhost:8080 PORT=5173 BASE_PATH=/`. Gmail reports "not connected" without the Replit connector.
 
 ## Stack
 
@@ -42,19 +52,19 @@ An AI-powered Gmail newsletter aggregator that scans your newsletters, removes n
 
 ## Product
 
-- **Sources** page: add newsletter sender emails to track
-- **Sync**: fetches last 24h emails from all tracked senders via Gmail API
-- **Generate Briefing**: AI processes fetched emails → structured daily digest with 7 sections
-- **Dashboard**: stats overview + latest briefing preview
+- **Connect Gmail and that's it**: sync scans the last 24h of the inbox, finds newsletters by their mailing-list headers (List-Unsubscribe / List-Id), skips receipts, account notices, promotions and app notifications, and adds new senders automatically
+- **My sources**: the newsletters found, each with an on/off switch (off stays off); adding one by hand is a fallback
+- **New briefing**: one tap checks Gmail, then the AI writes the digest. Top Stories are the 5 most relevant, and each story appears once
+- **Today**: sort the edition one card at a time (keep / skip / undo; swipe on phones), reading list, who wrote in, section tiles
+- **Reading view**: full story text and a pull quote (only kept if it's verbatim in the newsletter)
 - **Archive**: all past digests
 - **Search**: full-text search across all stories
 - Each story has headline, summary, "why it matters", source link, relevance score, thumbs up/down
 
 ## User preferences
 
-- Dark-mode first intelligence terminal aesthetic ("Briefing")
-- Dense, information-rich UI — signal over noise
-- 7 digest sections: Top Stories, Funding Rounds & IPOs, AI & Software, Startup & Tech Trends, Important Takeaways, Things To Watch, Useful Links
+- v3 "Garden" design (from Dessn): cream paper #F4EFE6, charcoal ink, garden green #3F6B4E for actions, pastel section tints, night edition; Geist for UI, Literata for long reads
+- Sections: Top Stories, How I AI, Product & Design, Engineering & AI, Job Openings, plus Funding, AI & Software, Trends, Takeaways, Watch, Links
 
 ## Gotchas
 

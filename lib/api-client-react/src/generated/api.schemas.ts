@@ -29,8 +29,14 @@ export interface Sender {
   /** @nullable */
   name?: string | null;
   active: boolean;
+  /** Found in the inbox by sync rather than added by hand */
+  autoDetected: boolean;
   emailCount: number;
   createdAt: string;
+}
+
+export interface SenderUpdate {
+  active: boolean;
 }
 
 export interface SenderInput {
@@ -42,6 +48,8 @@ export interface SenderInput {
 export interface SyncResult {
   fetched: number;
   senders: number;
+  /** Newsletter senders found for the first time in this sync */
+  discovered: number;
   errors: string[];
 }
 
@@ -78,6 +86,13 @@ export interface Story {
   sortOrder: number;
   /** @nullable */
   userFeedback?: string | null;
+  /** The story retold in short paragraphs, from the newsletter's own content */
+  body?: string[];
+  /**
+     * A line quoted verbatim from the newsletter
+     * @nullable
+     */
+  pullQuote?: string | null;
 }
 
 export interface DigestSection {
@@ -104,9 +119,22 @@ export interface DigestGenerateInput {
   hoursBack?: number;
 }
 
+/**
+ * none clears an earlier rating (undo)
+ */
+export type FeedbackInputRating = typeof FeedbackInputRating[keyof typeof FeedbackInputRating];
+
+
+export const FeedbackInputRating = {
+  up: 'up',
+  down: 'down',
+  none: 'none',
+} as const;
+
 export interface FeedbackInput {
   storyId: number;
-  rating: string;
+  /** none clears an earlier rating (undo) */
+  rating: FeedbackInputRating;
 }
 
 export interface Feedback {

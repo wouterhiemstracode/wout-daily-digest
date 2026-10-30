@@ -7,6 +7,7 @@ export const sendersTable = pgTable("senders", {
   email: text("email").notNull().unique(),
   name: text("name"),
   active: boolean("active").notNull().default(true),
+  autoDetected: boolean("auto_detected").notNull().default(false), // found by sync, not added by hand
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

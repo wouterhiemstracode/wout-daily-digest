@@ -9,5 +9,7 @@
 export interface SyncResult {
   fetched: number;
   senders: number;
+  /** Newsletter senders found for the first time in this sync */
+  discovered: number;
   errors: string[];
 }

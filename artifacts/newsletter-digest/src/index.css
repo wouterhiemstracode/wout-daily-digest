@@ -4,129 +4,206 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ───────────────────────────────────────────────────────────
+   wout.daily — v3 "Garden" design system
+   Raw tokens live in :root (day). shadcn names map onto them
+   so every ui/ primitive follows the edition palette.
+   ─────────────────────────────────────────────────────────── */
+
 @theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-card-border: var(--card-border);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover-border: var(--popover-border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-border: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-border: var(--secondary);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-border: var(--destructive);
+  --color-chart-1: var(--sec-top);
+  --color-chart-2: var(--sec-ai);
+  --color-chart-3: var(--sec-product);
+  --color-chart-4: var(--sec-eng);
+  --color-chart-5: var(--sec-jobs);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-ring: var(--sidebar-ring);
 
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-card-border: hsl(var(--card-border));
+  /* Edition palette */
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-paper-sunk: var(--paper-sunk);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-rule: var(--rule);
+  --color-sage: var(--sage);
+  --color-sage-ink: var(--sage-ink);
+  --color-sage-soft: var(--sage-soft);
+  --color-danger: var(--danger);
+  --color-positive: var(--positive);
+  --color-side: var(--side);
+  --color-side-ink: var(--side-ink);
+  --color-side-ink-2: var(--side-ink-2);
+  --color-side-rule: var(--side-rule);
+  --color-side-active: var(--side-active);
+  --color-sec-top: var(--sec-top);
+  --color-sec-ai: var(--sec-ai);
+  --color-sec-product: var(--sec-product);
+  --color-sec-eng: var(--sec-eng);
+  --color-sec-jobs: var(--sec-jobs);
+  --color-sec-top-soft: var(--sec-top-soft);
+  --color-sec-ai-soft: var(--sec-ai-soft);
+  --color-sec-product-soft: var(--sec-product-soft);
+  --color-sec-eng-soft: var(--sec-eng-soft);
+  --color-sec-jobs-soft: var(--sec-jobs-soft);
 
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-popover-border: hsl(var(--popover-border));
+  --font-sans: 'Geist', 'Inter', system-ui, sans-serif;
+  --font-serif: 'Literata', Georgia, serif;
+  --font-display: 'Geist', 'Inter', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
 
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-primary-border: var(--primary-border);
-
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-secondary-border: var(--secondary-border);
-
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-muted-border: var(--muted-border);
-
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-accent-border: var(--accent-border);
-
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-destructive-border: var(--destructive-border);
-
-  --color-chart-1: hsl(var(--chart-1));
-  --color-chart-2: hsl(var(--chart-2));
-  --color-chart-3: hsl(var(--chart-3));
-  --color-chart-4: hsl(var(--chart-4));
-  --color-chart-5: hsl(var(--chart-5));
-
-  --color-sidebar: hsl(var(--sidebar));
-  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-  --color-sidebar-border: hsl(var(--sidebar-border));
-  --color-sidebar-primary: hsl(var(--sidebar-primary));
-  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
-  --color-sidebar-primary-border: var(--sidebar-primary-border);
-  --color-sidebar-accent: hsl(var(--sidebar-accent));
-  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
-  --color-sidebar-accent-border: var(--sidebar-accent-border);
-  --color-sidebar-ring: hsl(var(--sidebar-ring));
-
-  --font-sans: 'Source Serif 4', Georgia, serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
-  --font-mono: 'Source Serif 4', Georgia, serif;
-  --font-display: 'Playfair Display', Georgia, serif;
-
-  --radius-sm: calc(var(--radius) - 2px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 2px);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 }
 
 :root {
-  /* Warm newspaper palette */
-  --background: 38 60% 97%;
-  --foreground: 0 2% 10%;
-  --border: 35 25% 80%;
-  --input: 35 20% 84%;
-  --ring: 16 47% 13%;
+  /* Day: cream paper, white and sand cards, charcoal ink, garden green */
+  --paper: #F4EFE6;
+  --paper-raised: #FFFFFF;   /* white card */
+  --paper-sunk: #E8DFCF;     /* sand: wells, hover, avatars */
+  --ink: #2A2925;
+  --ink-2: #57534B;
+  --ink-3: #625D54;
+  --rule: #E3DACB;
+  --sage: #3F6B4E;           /* garden green: primary, active nav, keep, links */
+  --sage-ink: #FFFFFF;
+  --sage-soft: #D7E6CF;
+  --danger: #9C4A32;         /* muted terracotta, errors only */
+  --positive: #3F6B4E;
+  --side: #1C1B19;
+  --side-ink: #EEE9DF;
+  --side-ink-2: #A39D92;
+  --side-rule: #2F2D29;
+  --side-active: #2A2925;
+  /* sections: pastel tint + dark text of the same hue */
+  --sec-top: #6B5414;     --sec-top-soft: #F1E5B8;
+  --sec-ai: #2F5A35;      --sec-ai-soft: #D7E6CF;
+  --sec-product: #8A3F1F; --sec-product-soft: #F2D3C2;
+  --sec-eng: #4A3D8F;     --sec-eng-soft: #DCD5F0;
+  --sec-jobs: #23556E;    --sec-jobs-soft: #CFE3EE;
+  --overlay-shadow: 0 12px 32px -12px rgba(42, 41, 37, 0.2);
+  --radius: 12px;
+}
 
-  --card: 38 45% 94%;
-  --card-foreground: 0 2% 10%;
-  --card-border: 35 25% 80%;
+.dark {
+  /* Night: warm near-black, deep muted tints, brighter green */
+  --paper: #161614;
+  --paper-raised: #201F1C;
+  --paper-sunk: #2A2925;
+  --ink: #EEE9DF;
+  --ink-2: #BEB8AC;
+  --ink-3: #969083;
+  --rule: #33312C;
+  --sage: #8CC49A;
+  --sage-ink: #161614;
+  --sage-soft: #23331F;
+  --danger: #E39A82;
+  --positive: #8CC49A;
+  --side: #0F0F0E;
+  --side-ink: #EEE9DF;
+  --side-ink-2: #969083;
+  --side-rule: #23221F;
+  --side-active: #201F1C;
+  --sec-top: #E3CB7E;     --sec-top-soft: #352E17;
+  --sec-ai: #A9D29C;      --sec-ai-soft: #23331F;
+  --sec-product: #EDB394; --sec-product-soft: #3A261C;
+  --sec-eng: #BDB2EC;     --sec-eng-soft: #2A2540;
+  --sec-jobs: #9CCBE3;    --sec-jobs-soft: #1B2F3A;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+}
 
-  --popover: 38 60% 97%;
-  --popover-foreground: 0 2% 10%;
-  --popover-border: 35 25% 80%;
-
-  --primary: 16 47% 13%;
-  --primary-foreground: 38 60% 95%;
-
-  --secondary: 35 30% 88%;
-  --secondary-foreground: 0 2% 10%;
-
-  --muted: 35 28% 88%;
-  --muted-foreground: 20 14% 40%;
-
-  --accent: 35 30% 88%;
-  --accent-foreground: 0 2% 10%;
-
-  --destructive: 0 65% 35%;
-  --destructive-foreground: 38 60% 95%;
-
-  --sidebar: 35 35% 93%;
-  --sidebar-foreground: 0 2% 15%;
-  --sidebar-border: 35 25% 78%;
-  --sidebar-primary: 16 47% 13%;
-  --sidebar-primary-foreground: 38 60% 95%;
-  --sidebar-accent: 35 28% 87%;
-  --sidebar-accent-foreground: 0 2% 10%;
-  --sidebar-ring: 16 47% 13%;
-
-  --chart-1: 16 47% 13%;
-  --chart-2: 0 65% 35%;
-  --chart-3: 120 40% 25%;
-  --chart-4: 35 80% 40%;
-  --chart-5: 200 50% 30%;
-
-  --radius: 0.125rem;
+/* Mapping is declared on both scopes so a .dark panel re-resolves it. */
+:root, .dark {
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--sage);
+  --card: var(--paper-raised);
+  --card-foreground: var(--ink);
+  --card-border: var(--rule);
+  --popover: var(--paper-raised);
+  --popover-foreground: var(--ink);
+  --popover-border: var(--rule);
+  --primary: var(--sage);
+  --primary-foreground: var(--sage-ink);
+  --secondary: var(--paper-sunk);
+  --secondary-foreground: var(--ink);
+  --muted: var(--paper-sunk);
+  --muted-foreground: var(--ink-3);
+  --accent: var(--paper-sunk);
+  --accent-foreground: var(--ink);
+  --destructive: var(--danger);
+  --destructive-foreground: var(--paper);
+  --sidebar: var(--side);
+  --sidebar-foreground: var(--side-ink);
+  --sidebar-border: var(--side-rule);
+  --sidebar-primary: var(--sage);
+  --sidebar-primary-foreground: var(--sage-ink);
+  --sidebar-accent: var(--side-active);
+  --sidebar-accent-foreground: var(--side-ink);
+  --sidebar-ring: var(--sage);
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
+  html { color-scheme: light; }
+  html.dark { color-scheme: dark; }
   body {
     @apply antialiased bg-background text-foreground;
-    font-family: 'Source Serif 4', Georgia, serif;
+    font-family: var(--font-sans);
+    font-optical-sizing: auto;
+    text-rendering: optimizeLegibility;
+    font-kerning: normal;
   }
 }
 
-/* Newspaper rule utilities */
-.rule-single { border-bottom: 1px solid hsl(35 25% 70%); }
-.rule-double { border-bottom: 3px double hsl(35 25% 70%); }
-.rule-thick  { border-bottom: 3px solid hsl(0 2% 10%); }
+/* ── Type roles ────────────────────────────────────────
+   Geist for headlines and interface, Literata only for long reads. */
+@layer components {
+  .t-display  { font-family: var(--font-sans); font-weight: 600; font-size: 52px; line-height: 60px; letter-spacing: -0.035em; text-wrap: balance; }
+  .t-h1       { font-family: var(--font-sans); font-weight: 600; font-size: 34px; line-height: 42px; letter-spacing: -0.028em; text-wrap: balance; }
+  .t-h2       { font-family: var(--font-sans); font-weight: 600; font-size: 24px; line-height: 32px; letter-spacing: -0.02em; text-wrap: balance; }
+  .t-h3       { font-family: var(--font-sans); font-weight: 600; font-size: 18px; line-height: 26px; letter-spacing: -0.012em; text-wrap: balance; }
+  .t-standfirst { font-family: var(--font-sans); font-weight: 400; font-size: 20px; line-height: 32px; letter-spacing: -0.01em; color: var(--ink-2); text-wrap: pretty; }
+  .t-body     { font-family: var(--font-serif); font-weight: 400; font-size: 20px; line-height: 32px; color: var(--ink); text-wrap: pretty; font-variant-numeric: oldstyle-nums proportional-nums; }
+  .t-body-sm  { font-family: var(--font-sans); font-weight: 400; font-size: 15px; line-height: 24px; color: var(--ink-2); text-wrap: pretty; }
+  .t-tag      { font-family: var(--font-sans); font-weight: 500; font-size: 13px; line-height: 20px; letter-spacing: -0.005em; }
+  .t-meta     { font-family: var(--font-sans); font-weight: 500; font-size: 13px; line-height: 20px; color: var(--ink-3); }
+  .t-caption  { font-family: var(--font-sans); font-weight: 400; font-size: 13px; line-height: 20px; color: var(--ink-3); }
+  .t-label    { font-family: var(--font-sans); font-weight: 500; font-size: 14px; line-height: 20px; letter-spacing: -0.005em; }
+  .t-numeral  { font-family: var(--font-sans); font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: -0.04em; }
+}

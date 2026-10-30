@@ -53,6 +53,7 @@ export const ListSendersResponseItem = zod.object({
   "email": zod.string(),
   "name": zod.string().nullish(),
   "active": zod.boolean(),
+  "autoDetected": zod.boolean().describe('Found in the inbox by sync rather than added by hand'),
   "emailCount": zod.number(),
   "createdAt": zod.string()
 })
@@ -69,6 +70,28 @@ export const CreateSenderBody = zod.object({
 
 
 /**
+ * @summary Turn a newsletter sender on or off
+ */
+export const UpdateSenderParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateSenderBody = zod.object({
+  "active": zod.boolean()
+})
+
+export const UpdateSenderResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "name": zod.string().nullish(),
+  "active": zod.boolean(),
+  "autoDetected": zod.boolean().describe('Found in the inbox by sync rather than added by hand'),
+  "emailCount": zod.number(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary Remove a newsletter sender
  */
 export const DeleteSenderParams = zod.object({
@@ -81,12 +104,13 @@ export const DeleteSenderResponse = zod.object({
 
 
 /**
- * Fetches emails from the last 24 hours for all tracked senders
- * @summary Fetch latest emails from Gmail
+ * Scans the last 24 hours of the connected inbox, adds any newsletter senders it finds (mailing-list mail that isn't a receipt or account notice), and stores the newsletters from every sender that is switched on.
+ * @summary Fetch latest newsletters from Gmail
  */
 export const SyncEmailsResponse = zod.object({
   "fetched": zod.number(),
   "senders": zod.number(),
+  "discovered": zod.number().describe('Newsletter senders found for the first time in this sync'),
   "errors": zod.array(zod.string())
 })
 
@@ -160,7 +184,9 @@ export const GenerateDigestResponse = zod.object({
   "sourceName": zod.string().nullish(),
   "relevanceScore": zod.number(),
   "sortOrder": zod.number(),
-  "userFeedback": zod.string().nullish()
+  "userFeedback": zod.string().nullish(),
+  "body": zod.array(zod.string()).optional().describe('The story retold in short paragraphs, from the newsletter\'s own content'),
+  "pullQuote": zod.string().nullish().describe('A line quoted verbatim from the newsletter')
 }))
 }))
 })
@@ -193,7 +219,9 @@ export const GetLatestDigestResponse = zod.object({
   "sourceName": zod.string().nullish(),
   "relevanceScore": zod.number(),
   "sortOrder": zod.number(),
-  "userFeedback": zod.string().nullish()
+  "userFeedback": zod.string().nullish(),
+  "body": zod.array(zod.string()).optional().describe('The story retold in short paragraphs, from the newsletter\'s own content'),
+  "pullQuote": zod.string().nullish().describe('A line quoted verbatim from the newsletter')
 }))
 }))
 })
@@ -230,7 +258,9 @@ export const GetDigestResponse = zod.object({
   "sourceName": zod.string().nullish(),
   "relevanceScore": zod.number(),
   "sortOrder": zod.number(),
-  "userFeedback": zod.string().nullish()
+  "userFeedback": zod.string().nullish(),
+  "body": zod.array(zod.string()).optional().describe('The story retold in short paragraphs, from the newsletter\'s own content'),
+  "pullQuote": zod.string().nullish().describe('A line quoted verbatim from the newsletter')
 }))
 }))
 })
@@ -241,7 +271,7 @@ export const GetDigestResponse = zod.object({
  */
 export const SubmitFeedbackBody = zod.object({
   "storyId": zod.number(),
-  "rating": zod.string()
+  "rating": zod.enum(['up', 'down', 'none']).describe('none clears an earlier rating (undo)')
 })
 
 

@@ -113,6 +113,29 @@ paths:
                 $ref: "#/components/schemas/Sender"
 
   /senders/{id}:
+    patch:
+      operationId: updateSender
+      tags: [senders]
+      summary: Turn a newsletter sender on or off
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SenderUpdate"
+      responses:
+        "200":
+          description: Updated sender
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sender"
     delete:
       operationId: deleteSender
       tags: [senders]
@@ -135,8 +158,11 @@ paths:
     post:
       operationId: syncEmails
       tags: [emails]
-      summary: Fetch latest emails from Gmail
-      description: Fetches emails from the last 24 hours for all tracked senders
+      summary: Fetch latest newsletters from Gmail
+      description: >-
+        Scans the last 24 hours of the connected inbox, adds any newsletter senders it finds
+        (mailing-list mail that isn't a receipt or account notice), and stores the newsletters
+        from every sender that is switched on.
       responses:
         "200":
           description: Sync result
@@ -348,6 +374,9 @@ components:
           type: ["string", "null"]
         active:
           type: boolean
+        autoDetected:
+          type: boolean
+          description: Found in the inbox by sync rather than added by hand
         emailCount:
           type: integer
         createdAt:
@@ -356,8 +385,17 @@ components:
         - id
         - email
         - active
+        - autoDetected
         - emailCount
         - createdAt
+
+    SenderUpdate:
+      type: object
+      properties:
+        active:
+          type: boolean
+      required:
+        - active
 
     SenderInput:
       type: object
@@ -376,6 +414,9 @@ components:
           type: integer
         senders:
           type: integer
+        discovered:
+          type: integer
+          description: Newsletter senders found for the first time in this sync
         errors:
           type: array
           items:
@@ -383,6 +424,7 @@ components:
       required:
         - fetched
         - senders
+        - discovered
         - errors
 
     Email:
@@ -510,6 +552,14 @@ components:
           type: integer
         userFeedback:
           type: ["string", "null"]
+        body:
+          type: array
+          description: The story retold in short paragraphs, from the newsletter's own content
+          items:
+            type: string
+        pullQuote:
+          type: ["string", "null"]
+          description: A line quoted verbatim from the newsletter
       required:
         - id
         - sectionId
@@ -533,6 +583,8 @@ components:
           type: integer
         rating:
           type: string
+          enum: [up, down, none]
+          description: "none clears an earlier rating (undo)"
       required:
         - storyId
         - rating

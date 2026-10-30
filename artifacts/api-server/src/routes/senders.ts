@@ -1,10 +1,21 @@
 import { Router } from "express";
 import { db, sendersTable, emailsTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
-import { CreateSenderBody, DeleteSenderParams } from "@workspace/api-zod";
-import { z } from "zod/v4";
+import { CreateSenderBody, DeleteSenderParams, UpdateSenderBody, UpdateSenderParams } from "@workspace/api-zod";
 
 const router = Router();
+
+function toSender(s: typeof sendersTable.$inferSelect, emailCount = 0) {
+  return {
+    id: s.id,
+    email: s.email,
+    name: s.name,
+    active: s.active,
+    autoDetected: s.autoDetected,
+    emailCount,
+    createdAt: s.createdAt.toISOString(),
+  };
+}
 
 router.get("/", async (req, res) => {
   const senders = await db.select().from(sendersTable).orderBy(sendersTable.createdAt);
@@ -17,22 +28,14 @@ router.get("/", async (req, res) => {
 
   const countMap = new Map(counts.map((c) => [c.senderId, c.count]));
 
-  const result = senders.map((s) => ({
-    id: s.id,
-    email: s.email,
-    name: s.name,
-    active: s.active,
-    emailCount: countMap.get(s.id) ?? 0,
-    createdAt: s.createdAt.toISOString(),
-  }));
-
-  res.json(result);
+  res.json(senders.map((s) => toSender(s, countMap.get(s.id) ?? 0)));
 });
 
 router.post("/", async (req, res) => {
   const parsed = CreateSenderBody.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: "Invalid input", details: parsed.error.issues });
+    res.status(400).json({ error: "Invalid input", details: parsed.error.issues });
+    return;
   }
 
   const { email, name } = parsed.data;
@@ -43,20 +46,39 @@ router.post("/", async (req, res) => {
     .onConflictDoUpdate({ target: sendersTable.email, set: { active: true } })
     .returning();
 
-  res.status(201).json({
-    id: sender!.id,
-    email: sender!.email,
-    name: sender!.name,
-    active: sender!.active,
-    emailCount: 0,
-    createdAt: sender!.createdAt.toISOString(),
-  });
+  res.status(201).json(toSender(sender!));
+});
+
+router.patch("/:id", async (req, res) => {
+  const params = UpdateSenderParams.safeParse({ id: Number(req.params["id"]) });
+  const body = UpdateSenderBody.safeParse(req.body);
+  if (!params.success || !body.success) {
+    res.status(400).json({ error: "Invalid input" });
+    return;
+  }
+
+  const [sender] = await db
+    .update(sendersTable)
+    .set({ active: body.data.active })
+    .where(eq(sendersTable.id, params.data.id))
+    .returning();
+  if (!sender) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  const [counted] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(emailsTable)
+    .where(eq(emailsTable.senderId, sender.id));
+  res.json(toSender(sender, counted?.count ?? 0));
 });
 
 router.delete("/:id", async (req, res) => {
   const parsed = DeleteSenderParams.safeParse({ id: Number(req.params["id"]) });
   if (!parsed.success) {
-    return res.status(400).json({ error: "Invalid ID" });
+    res.status(400).json({ error: "Invalid ID" });
+    return;
   }
 
   await db.delete(sendersTable).where(eq(sendersTable.id, parsed.data.id));

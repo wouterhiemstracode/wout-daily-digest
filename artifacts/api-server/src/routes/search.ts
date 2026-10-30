@@ -8,7 +8,8 @@ const router = Router();
 router.get("/", async (req, res) => {
   const parsed = SearchDigestsQueryParams.safeParse(req.query);
   if (!parsed.success || !parsed.data.q) {
-    return res.status(400).json({ error: "Missing search query" });
+    res.status(400).json({ error: "Missing search query" });
+    return;
   }
 
   const q = `%${parsed.data.q}%`;

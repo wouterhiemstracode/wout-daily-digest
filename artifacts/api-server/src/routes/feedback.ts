@@ -8,17 +8,17 @@ const router = Router();
 router.post("/", async (req, res) => {
   const parsed = SubmitFeedbackBody.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: "Invalid input", details: parsed.error.issues });
+    res.status(400).json({ error: "Invalid input", details: parsed.error.issues });
+    return;
   }
 
   const { storyId, rating } = parsed.data;
 
-  if (!["up", "down"].includes(rating)) {
-    return res.status(400).json({ error: "Rating must be 'up' or 'down'" });
-  }
-
-  // Update story's userFeedback field
-  await db.update(storiesTable).set({ userFeedback: rating }).where(eq(storiesTable.id, storyId));
+  // "none" is an undo: it clears the story's rating, and is still logged as feedback.
+  await db
+    .update(storiesTable)
+    .set({ userFeedback: rating === "none" ? null : rating })
+    .where(eq(storiesTable.id, storyId));
 
   const [feedback] = await db
     .insert(feedbackTable)

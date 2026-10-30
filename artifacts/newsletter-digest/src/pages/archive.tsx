@@ -14,7 +14,6 @@ export default function Archive() {
       <div className="border-t-[3px] border-b border-double border-foreground pt-3 pb-6 mb-8">
         <h1
           className="text-4xl font-black text-primary uppercase tracking-tight mt-3"
-          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
         >
           Past Editions
         </h1>
@@ -37,7 +36,6 @@ export default function Archive() {
                 <div>
                   <h3
                     className="text-xl font-bold text-foreground group-hover:text-primary transition-colors leading-tight"
-                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                   >
                     Morning Edition — {format(new Date(digest.date), "MMMM d, yyyy")}
                   </h3>
@@ -56,12 +54,11 @@ export default function Archive() {
         <div className="text-center py-16 border border-dashed border-border bg-card">
           <p
             className="text-xl italic text-muted-foreground mb-2"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
           >
             The archive is empty — no editions yet.
           </p>
           <p className="text-sm font-sans text-muted-foreground">
-            Head to the dashboard to generate your first briefing.
+            Head to Today to write your first briefing.
           </p>
         </div>
       )}

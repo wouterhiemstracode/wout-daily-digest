@@ -66,6 +66,8 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    // Local development outside Replit: API_URL=http://localhost:8080 forwards /api there.
+    proxy: process.env.API_URL ? { "/api": process.env.API_URL } : undefined,
   },
   preview: {
     port,

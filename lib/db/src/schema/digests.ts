@@ -29,8 +29,10 @@ export const storiesTable = pgTable("stories", {
   sourceName: text("source_name"),
   relevanceScore: integer("relevance_score").notNull().default(50),
   sortOrder: integer("sort_order").notNull().default(0),
-  userFeedback: text("user_feedback"), // up | down | null
+  userFeedback: text("user_feedback"), // up | down | null (undo clears it)
   takeaways: jsonb("takeaways").$type<string[]>().default([]),
+  body: jsonb("body").$type<string[]>().default([]),
+  pullQuote: text("pull_quote"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

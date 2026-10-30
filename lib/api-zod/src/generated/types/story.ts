@@ -21,4 +21,11 @@ export interface Story {
   sortOrder: number;
   /** @nullable */
   userFeedback?: string | null;
+  /** The story retold in short paragraphs, from the newsletter's own content */
+  body?: string[];
+  /**
+     * A line quoted verbatim from the newsletter
+     * @nullable
+     */
+  pullQuote?: string | null;
 }

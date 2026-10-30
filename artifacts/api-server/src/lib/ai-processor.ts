@@ -11,21 +11,56 @@ export interface EmailContent {
   receivedAt: Date;
 }
 
+export const SECTION_TYPES = [
+  "top_stories",
+  "how_i_ai",
+  "product",
+  "engineering",
+  "funding_ipos",
+  "ai_software",
+  "trends",
+  "takeaways",
+  "watch",
+  "links",
+  "jobs",
+] as const;
+export type SectionType = (typeof SECTION_TYPES)[number];
+
+const SECTION_TITLES: Record<SectionType, string> = {
+  top_stories: "Top Stories",
+  how_i_ai: "How I AI",
+  product: "Product & Design",
+  engineering: "Engineering & AI",
+  funding_ipos: "Funding Rounds & IPOs",
+  ai_software: "AI & Software",
+  trends: "Startup & Tech Trends",
+  takeaways: "Important Takeaways",
+  watch: "Things To Watch",
+  links: "Useful Links",
+  jobs: "Job Openings",
+};
+
+/** Sections that keep their own stories out of Top Stories. */
+const NEVER_TOP: SectionType[] = ["how_i_ai", "jobs", "links"];
+const TOP_STORY_COUNT = 5;
+
 export interface ProcessedStory {
   headline: string;
   summary: string;
   whyItMatters: string;
   takeaways: string[];
+  body: string[];
+  pullQuote: string | null;
   sourceUrl: string | null;
   sourceName: string | null;
   relevanceScore: number;
-  section: "top_stories" | "funding_ipos" | "ai_software" | "trends" | "takeaways" | "watch" | "links" | "how_i_ai";
+  section: SectionType;
 }
 
 export interface DigestOutput {
   intro: string;
   sections: {
-    type: "top_stories" | "funding_ipos" | "ai_software" | "trends" | "takeaways" | "watch" | "links" | "how_i_ai" | "jobs";
+    type: SectionType;
     title: string;
     stories: ProcessedStory[];
   }[];
@@ -141,7 +176,9 @@ Takeaways — treat these like a text from a smart friend:
 Intro: Casual, warm, 1-2 short sentences. Like a friend texting before a meeting.
 
 SECTION TYPES:
-- top_stories: The 3-5 most important and relevant stories today, ranked by significance to Wout
+- top_stories: Leave this to the editor. Put each story in its own section below; the 5 most relevant become Top Stories automatically.
+- product: Product management, product strategy, design and UX craft
+- engineering: How teams build software and run AI in production: developer tools, evaluation, infrastructure, engineering practice
 - funding_ipos: Funding rounds, IPOs, M&A deals worth knowing about
 - ai_software: AI developments, new tools, software launches that matter for business
 - trends: GTM, SaaS, and startup ecosystem shifts and emerging patterns
@@ -156,6 +193,8 @@ For each story output:
 - summary: EXACTLY 2 short sentences. Plain language only. Max 30 words total.
 - whyItMatters: 1 short sentence — "so what?" in plain language, under 15 words
 - takeaways: 1-3 bullets, each under 15 words, plain conversational language
+- body: the full story for the reading view, 3-6 short paragraphs of 2-4 sentences each (1-2 paragraphs for links and jobs). Retell what the newsletter actually says, in the same plain style. Use ONLY facts, numbers, names and examples from the newsletter text. Never add outside knowledge or invent details.
+- pullQuote: one striking sentence copied WORD FOR WORD from the newsletter text, without quotation marks, or null. Never paraphrase or invent a quote.
 - sourceUrl: the most relevant URL mentioned in the content, or null
 - sourceName: the newsletter or publication name (short form, e.g. "Lenny's Newsletter" not the full email)
 - relevanceScore: 1-100 based on how relevant and important this is to Wout's world. Only include stories scoring 35+.
@@ -172,10 +211,12 @@ Return ONLY valid JSON:
       "summary": "string",
       "whyItMatters": "string",
       "takeaways": ["string", "string"],
+      "body": ["paragraph", "paragraph", "paragraph"],
+      "pullQuote": "string or null",
       "sourceUrl": "string or null",
       "sourceName": "string or null",
       "relevanceScore": number,
-      "section": "top_stories|funding_ipos|ai_software|trends|takeaways|watch|links|how_i_ai"
+      "section": "how_i_ai|product|engineering|funding_ipos|ai_software|trends|takeaways|watch|links|jobs"
     }
   ]
 }`;
@@ -188,7 +229,7 @@ Return ONLY valid JSON:
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-5-mini",
-      max_completion_tokens: 8192,
+      max_completion_tokens: 24000,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: truncate(userPrompt, 50000) },
@@ -199,10 +240,8 @@ Return ONLY valid JSON:
     const content = response.choices[0]?.message?.content ?? "{}";
     const parsed = JSON.parse(content) as { intro?: string; stories?: ProcessedStory[] };
     intro = parsed.intro ?? "";
-    stories = (parsed.stories ?? []).map((s) => ({
-      ...s,
-      takeaways: Array.isArray(s.takeaways) ? s.takeaways : [],
-    }));
+    const sourceText = emailSummaries.join("\n");
+    stories = (parsed.stories ?? []).map((s) => cleanStory(s, sourceText));
   } catch (err) {
     logger.error({ err }, "AI processing failed");
     stories = [];
@@ -211,48 +250,53 @@ Return ONLY valid JSON:
   return buildDigestFromStories(stories, intro);
 }
 
-function buildDigestFromStories(stories: ProcessedStory[], intro = ""): DigestOutput {
-  const sectionDefs = [
-    { type: "top_stories" as const, title: "Top Stories" },
-    { type: "funding_ipos" as const, title: "Funding Rounds & IPOs" },
-    { type: "ai_software" as const, title: "AI & Software" },
-    { type: "trends" as const, title: "Startup & Tech Trends" },
-    { type: "takeaways" as const, title: "Important Takeaways" },
-    { type: "watch" as const, title: "Things To Watch" },
-    { type: "links" as const, title: "Useful Links" },
-    { type: "how_i_ai" as const, title: "How I AI" },
-    { type: "jobs" as const, title: "Job Openings" },
-  ];
+/** Normalise one story from the model, and drop a pull quote that isn't really in the newsletter. */
+export function cleanStory(s: Partial<ProcessedStory>, sourceText: string): ProcessedStory {
+  const section = SECTION_TYPES.includes(s.section as SectionType) && s.section !== "top_stories" ? s.section! : "trends";
+  const strings = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.trim() !== "") : []);
+  return {
+    headline: s.headline ?? "",
+    summary: s.summary ?? "",
+    whyItMatters: s.whyItMatters ?? "",
+    takeaways: strings(s.takeaways),
+    body: strings(s.body),
+    pullQuote: s.pullQuote && isQuotedFrom(s.pullQuote, sourceText) ? s.pullQuote.trim() : null,
+    sourceUrl: s.sourceUrl ?? null,
+    sourceName: s.sourceName ?? null,
+    relevanceScore: Number(s.relevanceScore) || 0,
+    section,
+  };
+}
 
-  const sortedAll = [...stories].sort((a, b) => b.relevanceScore - a.relevanceScore);
+/** True when the quote appears in the source, ignoring case, spacing and quote styles. */
+export function isQuotedFrom(quote: string, sourceText: string) {
+  const norm = (t: string) =>
+    t
+      .toLowerCase()
+      .replace(/[\u2018\u2019\u201C\u201D"']/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  const q = norm(quote).replace(/[.!?]$/, "");
+  return q.length >= 12 && norm(sourceText).includes(q);
+}
 
-  const sections = sectionDefs.map((def) => {
-    let sectionStories: ProcessedStory[];
-    if (def.type === "top_stories") {
-      sectionStories = sortedAll.slice(0, 5);
-    } else {
-      sectionStories = stories
-        .filter((s) => s.section === def.type)
-        .sort((a, b) => b.relevanceScore - a.relevanceScore);
-    }
-    return { type: def.type, title: def.title, stories: sectionStories };
-  });
+/**
+ * Group stories into sections. Top Stories takes the most relevant stories and they
+ * leave their own section, so every story appears in the digest exactly once.
+ */
+export function buildDigestFromStories(stories: ProcessedStory[], intro = ""): DigestOutput {
+  const byScore = (a: ProcessedStory, b: ProcessedStory) => b.relevanceScore - a.relevanceScore;
+  const top = new Set(stories.filter((s) => !NEVER_TOP.includes(s.section)).sort(byScore).slice(0, TOP_STORY_COUNT));
+
+  const sections = SECTION_TYPES.map((type) => ({
+    type,
+    title: SECTION_TITLES[type],
+    stories: (type === "top_stories" ? [...top] : stories.filter((s) => s.section === type && !top.has(s))).sort(byScore),
+  }));
 
   return { intro, sections };
 }
 
 function buildEmptySections(): DigestOutput {
-  return { intro: "", sections: buildEmptySectionList() };
-}
-
-function buildEmptySectionList(): DigestOutput["sections"] {
-  return [
-    { type: "top_stories", title: "Top Stories", stories: [] },
-    { type: "funding_ipos", title: "Funding Rounds & IPOs", stories: [] },
-    { type: "ai_software", title: "AI & Software", stories: [] },
-    { type: "trends", title: "Startup & Tech Trends", stories: [] },
-    { type: "takeaways", title: "Important Takeaways", stories: [] },
-    { type: "watch", title: "Things To Watch", stories: [] },
-    { type: "links", title: "Useful Links", stories: [] },
-  ];
+  return { intro: "", sections: SECTION_TYPES.map((type) => ({ type, title: SECTION_TITLES[type], stories: [] })) };
 }

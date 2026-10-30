@@ -12,6 +12,8 @@ export interface Sender {
   /** @nullable */
   name?: string | null;
   active: boolean;
+  /** Found in the inbox by sync rather than added by hand */
+  autoDetected: boolean;
   emailCount: number;
   createdAt: string;
 }
