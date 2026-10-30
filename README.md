@@ -5,64 +5,61 @@ Your newsletters, one calm briefing. Sign in with Google, and wout.daily finds t
 - **Finds newsletters by itself:** mailing-list mail (List-Unsubscribe / List-Id headers), skipping receipts, account notices, promotions and app notifications. **My sources** lists what it found, each with an on/off switch.
 - **Writes the briefing** with Claude Opus 5.5: Top Stories plus sections (How I AI, Product & Design, Engineering & AI, Job Openings, …), each story with full text and a pull quote that is only kept if it's verbatim in the newsletter.
 - **Runs every morning** on a schedule, or whenever you tap **New briefing**.
+- **Learns your taste:** keeps and skips are counted per newsletter and section and steer the next briefing.
 - **Private:** only the Google accounts in `ALLOWED_EMAILS` can sign in. Gmail access is read-only.
 
-## Run it on Railway
+## Run it on Google Cloud Run
 
-You need a [Railway](https://railway.com) account (about $5/month), a Google Cloud project (free), and an [Anthropic API key](https://console.anthropic.com). Claude costs roughly $0.30–0.80 per briefing, depending on how many newsletters arrived.
+Everything runs in one Google Cloud project: **Cloud Run** for the app and **Cloud Scheduler** for the morning briefing. The database is a free **[Neon](https://neon.tech)** Postgres. You also need an [Anthropic API key](https://console.anthropic.com). Cloud Run and Scheduler stay within Google's free tier for one person (a billing card is still required); Claude costs roughly $0.30–0.80 per briefing.
 
 ### 1. Google sign-in (about 10 minutes)
 
-1. Open [console.cloud.google.com](https://console.cloud.google.com) and create a project, e.g. `wout-daily`.
+1. Open [console.cloud.google.com](https://console.cloud.google.com), create a project (e.g. `wout-daily`) and **link a billing account** (Billing in the menu).
 2. **APIs & Services → Library**: enable the **Gmail API**.
-3. **APIs & Services → OAuth consent screen** (Google Auth Platform):
-   - User type **External**; app name `wout.daily`; your email as support and developer contact.
-   - **Data access / Scopes**: add `openid`, `.../auth/userinfo.email` and `.../auth/gmail.readonly`.
-   - **Audience**: add your Gmail address as a test user.
-4. **Credentials → Create credentials → OAuth client ID**, type **Web application**. Leave the redirect URI for step 2.4. Keep the **client ID** and **client secret**.
+3. **Google Auth Platform → Get started**: app name `wout.daily`, your email for support and contact, audience **External**.
+4. **Data access → Add or remove scopes**: `openid`, `.../auth/userinfo.email`, `.../auth/gmail.readonly`.
+5. **Audience → Test users**: add your Gmail address.
+6. **Clients → Create client**, type **Web application**. Keep the **client ID** and **client secret**. The redirect URI comes in step 3.
 
-> **Publishing status.** While the app is in **Testing**, Google expires the Gmail permission after 7 days, so you'd have to sign in again every week. For a personal app, set **Audience → Publish app → In production**. Google then shows "Google hasn't verified this app" once when you sign in; click **Advanced → Go to wout.daily**. Verification is only needed for apps used by other people.
+### 2. Database
 
-### 2. Deploy
+At [neon.tech](https://neon.tech), create a free project (region near you, e.g. Frankfurt) and copy its **connection string** (`postgresql://…neon.tech/neondb?sslmode=require…`). The app creates its tables on first start.
 
-1. Railway → **New project → Deploy from GitHub repo** → `wout-daily-digest`. The repo's `railway.json` sets the build, start command, health check, and a pre-deploy step that applies the database schema.
-2. In the project: **New → Database → PostgreSQL**.
-3. Web service → **Settings → Networking → Generate domain**, e.g. `wout-daily.up.railway.app`.
-4. Back in Google **Credentials**, edit the OAuth client and add the redirect URI:
-   `https://wout-daily.up.railway.app/api/auth/google/callback`
-5. Web service → **Variables**:
+### 3. Deploy
 
-   | Variable | Value |
-   |---|---|
-   | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
-   | `APP_URL` | `https://wout-daily.up.railway.app` |
-   | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | from step 1.4 |
-   | `ALLOWED_EMAILS` | your Gmail address (comma-separate several) |
-   | `SESSION_SECRET` | a long random string, e.g. `openssl rand -hex 32` |
-   | `ANTHROPIC_API_KEY` | from console.anthropic.com |
-   | `WEBHOOK_SECRET` | optional: only if you use the funding webhook |
+Open **Cloud Shell** (the `>_` button at the top of the Google Cloud console) and run:
 
-6. Open the domain and **Sign in with Google**. That one consent screen also connects Gmail.
+```bash
+git clone https://github.com/wouterhiemstracode/wout-daily-digest && cd wout-daily-digest
+bash scripts/deploy-cloud-run.sh
+```
 
-### 3. The morning briefing
+The first run creates `.env.production`. Click **Open Editor**, fill in `DATABASE_URL` (Neon), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `ALLOWED_EMAILS` (your Gmail; comma-separate several) and `ANTHROPIC_API_KEY`, then run the script again. It:
 
-Add a second service from the same repo for the scheduled run:
+- enables Cloud Run, Cloud Build and Cloud Scheduler
+- builds the container (`Dockerfile`) and deploys it as `wout-daily` in `europe-west1`
+- generates `SESSION_SECRET` and `CRON_SECRET` (kept in `.env.production`, never committed)
+- schedules the morning briefing for **06:15 Europe/Amsterdam** (`SCHEDULE` and `TIME_ZONE` in `.env.production`)
+- prints your app address and the three links Google needs
 
-1. **New → GitHub repo** → `wout-daily-digest` again; rename it `daily`.
-2. **Settings → Config-as-code → Railway config file**: `/railway/daily.json`. It runs `dist/daily.mjs` (check Gmail, then write the briefing) at **05:15 UTC**, which is 06:15 in Amsterdam in winter and 07:15 in summer. Change `cronSchedule` there to move it.
-3. Give it the same variables as the web service. Easiest: make them **Shared variables** at the project level and reference them from both services.
+Paste those links into **Google Auth Platform**:
+- **Clients → your client → Authorized redirect URIs:** `https://…run.app/api/auth/google/callback`
+- **Branding:** home page `https://…run.app` and privacy policy `https://…run.app/privacy`
 
-A run with no new newsletters skips the briefing. A failed run shows as failed in the service's deployments.
+Then open the app and **Sign in with Google**. To ship new code later: `git pull && bash scripts/deploy-cloud-run.sh`.
+
+> **Staying signed in.** While the Google app is in **Testing**, Google expires the Gmail permission after 7 days. Once Branding is filled in, **Audience → Publish app** lifts that. Google then shows "Google hasn't verified this app" once when you sign in; click **Advanced → Go to wout.daily**. Verification is only needed for apps used by other people.
 
 ### 4. Bring your data from Replit (once)
 
-In the **Replit Shell**, with the Railway Postgres **public** URL (Postgres → Connect → Public network):
+In the **Replit Shell**:
 
 ```bash
-RAILWAY_DATABASE_URL='postgresql://…' bash scripts/copy-from-replit.sh
+git pull
+TARGET_DATABASE_URL='postgresql://…(the Neon connection string)' bash scripts/copy-from-replit.sh
 ```
 
-It copies sources, emails, editions, stories and ratings, refuses to overwrite a Railway database that already has editions, and prints the row counts on both sides. Then sign in on Railway; Gmail tokens aren't copied. After that you can delete the Replit app.
+It copies sources, emails, editions, stories and ratings, refuses to overwrite a database that already has editions, and prints the row counts on both sides. Gmail tokens aren't copied; you sign in again on the new app. Then you can delete the Replit app.
 
 ## Develop locally
 
@@ -79,9 +76,10 @@ pnpm --filter @workspace/newsletter-digest run dev   # app on :5173, /api proxie
 ### Checks
 
 - `pnpm run typecheck`: whole workspace
-- `pnpm --filter @workspace/api-server run test`: unit tests. With `TEST_DATABASE_URL` set to a throwaway Postgres (schema pushed), it also tests the API flow end to end: Google sign-in (allowed, refused, forged state), token refresh, sync → generate → feedback, with Google, Gmail and Claude faked.
+- `pnpm --filter @workspace/api-server run test`: unit tests. With `TEST_DATABASE_URL` set to a throwaway Postgres (the tests wipe it and apply `lib/db/migrations`), it also tests the API flow end to end: Google sign-in (allowed, refused, forged state), token refresh, sync → generate → feedback, with Google, Gmail and Claude faked.
 - `pnpm --filter @workspace/newsletter-digest run test:e2e`: Playwright on desktop and phone, including visual baselines of the v3 design (`--update-snapshots` to accept an intended change).
 - `pnpm --filter @workspace/api-spec run codegen`: regenerate the API client and Zod schemas after editing `lib/api-spec/openapi.yaml`.
+- `pnpm --filter @workspace/db run generate`: after changing `lib/db/src/schema`, write the SQL migration that production applies on startup.
 
 ## How it's built
 
@@ -89,14 +87,14 @@ pnpm workspace, TypeScript, Node 22+.
 
 | Path | What |
 |---|---|
-| `artifacts/api-server` | Express 5 API. In production it also serves the built frontend, so the app is one service. `src/daily.ts` is the morning job. |
+| `artifacts/api-server` | Express 5 API. In production it also serves the built frontend, so the app is one container (`Dockerfile`). `POST /api/jobs/daily` is the morning job. |
 | `artifacts/api-server/src/lib/google.ts` | Google sign-in and Gmail access (OAuth, token refresh) |
 | `artifacts/api-server/src/lib/gmail.ts` | Newsletter detection and fetching |
 | `artifacts/api-server/src/lib/ai-processor.ts` | The Claude call and digest building |
 | `artifacts/api-server/src/lib/briefing.ts` | Sync and write-a-digest, shared by the API and the daily job |
 | `artifacts/newsletter-digest` | React + Vite + Tailwind frontend (v3 "Garden" design) |
 | `lib/api-spec/openapi.yaml` | The API contract; Orval generates `lib/api-client-react` and `lib/api-zod` |
-| `lib/db` | Drizzle schema for Postgres |
-| `scripts` | Demo seed, and the one-time copy from Replit |
+| `lib/db` | Drizzle schema for Postgres, and the SQL migrations in `lib/db/migrations` |
+| `scripts` | Cloud Run deploy, demo seed, and the one-time copy from Replit |
 
 Design: cream paper `#F4EFE6`, charcoal ink, garden green `#3F6B4E` for actions, pastel section tints and a night edition; Geist for the interface, Literata for long reads.

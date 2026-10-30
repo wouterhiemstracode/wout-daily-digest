@@ -240,3 +240,15 @@ export async function buildFullDigest(digestId: number) {
   };
 }
 
+/** The morning run: check Gmail, then write a briefing if new newsletters arrived. */
+export async function runDaily(log: Logger) {
+  const synced = await syncNewsletters(log);
+  log.info(synced, "Inbox checked");
+  if (synced.fetched === 0) {
+    log.info("No new newsletters since the last run; no briefing today");
+    return { ...synced, digestId: null as number | null };
+  }
+  const digest = await writeDigest(24);
+  log.info({ digestId: digest.id, stories: digest.storyCount }, "Briefing written");
+  return { ...synced, digestId: digest.id as number | null };
+}

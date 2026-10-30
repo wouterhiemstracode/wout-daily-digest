@@ -1,3 +1,5 @@
+import path from "node:path";
+import { migrateDatabase } from "@workspace/db/migrate";
 import app from "./app";
 import { logger } from "./lib/logger";
 
@@ -17,6 +19,13 @@ const port = Number(rawPort);
 
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
+}
+
+// Production applies pending migrations before taking traffic; local development uses `db push`.
+if (process.env["NODE_ENV"] === "production") {
+  const folder = process.env["MIGRATIONS_DIR"] ?? path.resolve(import.meta.dirname, "../../../lib/db/migrations");
+  await migrateDatabase(folder);
+  logger.info({ folder }, "Database up to date");
 }
 
 app.listen(port, (err) => {

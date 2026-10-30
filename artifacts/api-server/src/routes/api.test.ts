@@ -112,7 +112,10 @@ describe.skipIf(!enabled)("api (needs TEST_DATABASE_URL)", async () => {
   };
 
   beforeAll(async () => {
-    await db.execute(sql`truncate senders, emails, digests, feedback, gmail_tokens restart identity cascade`);
+    // A blank database migrated exactly as production does it.
+    await db.execute(sql`drop schema if exists public cascade; drop schema if exists drizzle cascade; create schema public`);
+    const { migrateDatabase } = await import("@workspace/db/migrate");
+    await migrateDatabase(new URL("../../../../lib/db/migrations", import.meta.url).pathname);
     await db.insert(sendersTable).values({ email: "muted@example.com", name: "Muted Weekly", active: false, autoDetected: true });
   });
   afterAll(() => pool.end());
@@ -203,6 +206,13 @@ describe.skipIf(!enabled)("api (needs TEST_DATABASE_URL)", async () => {
     expect((await api.get("/api/auth/gmail/status")).body.connected).toBe(true);
     expect(google.refreshes).toBe(1);
     expect((await db.select().from(gmailTokensTable))[0]!.accessToken).toBe("at-wout-2");
+  });
+
+  it("the morning job needs its secret, then checks Gmail and writes a briefing only when something new arrived", async () => {
+    await request(app).post("/api/jobs/daily").expect(401);
+    await request(app).post("/api/jobs/daily").set("x-cron-secret", "wrong-secret").expect(401);
+    const run = await request(app).post("/api/jobs/daily").set("x-cron-secret", "cron-secret").expect(200);
+    expect(run.body).toMatchObject({ fetched: 0, digestId: null }); // everything was already synced
   });
 
   it("webhooks need their secret, not a session", async () => {
