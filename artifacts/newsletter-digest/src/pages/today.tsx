@@ -1,18 +1,16 @@
 import * as React from "react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
-import { RefreshCw, Plus, ArrowRight } from "lucide-react";
+import { Plus, ArrowRight } from "lucide-react";
 import {
   useGetLatestDigest,
   useListSenders,
   useGetGmailAuthStatus,
   useGetGmailAuthUrl,
   getGetGmailAuthUrlQueryKey,
-  useGenerateDigest,
-  useSyncEmails,
   useSubmitFeedback,
 } from "@workspace/api-client-react";
-import { useToast } from "@/hooks/use-toast";
+import { useBriefing } from "@/hooks/use-briefing";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PhoneDeck } from "@/components/press/phone-deck";
@@ -67,13 +65,12 @@ function useSortDesk(digestId: number | undefined, stories: EditionStory[]) {
 }
 
 export default function Today() {
-  const { data: digest, isLoading, refetch } = useGetLatestDigest();
+  const { data: digest, isLoading } = useGetLatestDigest();
   const { data: senders } = useListSenders();
   const { data: authStatus } = useGetGmailAuthStatus();
   const { data: authUrl } = useGetGmailAuthUrl({
     query: { enabled: authStatus ? !authStatus.connected : false, queryKey: getGetGmailAuthUrlQueryKey() },
   });
-  const { toast } = useToast();
   const [, navigate] = useLocation();
   const isPhone = useIsMobile();
 
@@ -94,18 +91,8 @@ export default function Today() {
     return () => window.removeEventListener("keydown", onKey);
   }, [decide, undo]);
 
-  const generate = useGenerateDigest({
-    mutation: {
-      onSuccess: () => { toast({ title: "Your briefing is ready", description: "A fresh edition has gone to press." }); refetch(); },
-      onError: () => toast({ title: "Couldn't write a briefing", description: "Try again in a moment.", variant: "destructive" }),
-    },
-  });
-  const sync = useSyncEmails({
-    mutation: {
-      onSuccess: (d) => toast({ title: "Inbox synced", description: `${d.fetched} new emails from ${d.senders} sources.` }),
-      onError: () => toast({ title: "Sync failed", description: "Couldn't reach Gmail. Try again shortly.", variant: "destructive" }),
-    },
-  });
+  const briefing = useBriefing();
+  const connected = !!authStatus?.connected;
 
   const editionDate = format(digest ? new Date(digest.date + "T12:00:00") : new Date(), "EEEE d MMMM yyyy");
   const intro = digest?.intro?.replace(/^Good (morning|afternoon|evening)[^.]*\.\s*/i, "");
@@ -149,29 +136,22 @@ export default function Today() {
           <h1 className="t-display max-md:text-[36px] max-md:leading-[42px] text-ink mt-3">{greeting()}, Wout</h1>
           {intro && <p className="t-standfirst mt-3 max-w-[60ch]">{intro}</p>}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <PressButton
-            variant="secondary"
-            onClick={() => sync.mutate()}
-            disabled={sync.isPending || !authStatus?.connected}
-            icon={<RefreshCw className={`h-4 w-4 ${sync.isPending ? "animate-spin" : ""}`} strokeWidth={1.75} />}
-          >
-            {sync.isPending ? "Syncing…" : "Sync"}
-          </PressButton>
+        {connected && (
           <PressButton
             variant="primary"
-            onClick={() => generate.mutate({ data: {} })}
-            disabled={generate.isPending || !authStatus?.connected}
+            className="shrink-0 self-start md:self-auto"
+            onClick={briefing.make}
+            disabled={briefing.busy}
             icon={<Plus className="h-4 w-4" strokeWidth={2} />}
           >
-            {generate.isPending ? "Writing…" : "New briefing"}
+            {briefing.label ?? "New briefing"}
           </PressButton>
-        </div>
+        )}
       </header>
 
       {authStatus && !authStatus.connected && (
         <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 bg-sec-ai-soft px-6 py-4 rounded-2xl">
-          <p className="font-serif text-[16px] leading-6 text-ink">Connect Gmail so tomorrow’s newsletters can go to press.</p>
+          <p className="font-serif text-[16px] leading-6 text-ink">Connect Gmail. wout.daily finds your newsletters there and writes your briefing from them.</p>
           <a href={authUrl?.url || "#"} className="h-10 px-5 shrink-0 inline-flex items-center rounded-full bg-sage text-sage-ink font-sans font-medium text-[14px]">Connect Gmail</a>
         </div>
       )}
@@ -185,7 +165,16 @@ export default function Today() {
         <div className="py-24 text-center">
           <div className="t-meta">The press is quiet</div>
           <h2 className="t-h1 mt-3">No briefing yet</h2>
-          <p className="t-standfirst mt-3">Add a few newsletters in My sources, sync your inbox and write your first edition.</p>
+          <p className="t-standfirst mt-3 max-w-[48ch] mx-auto">
+            {connected
+              ? "wout.daily reads the newsletters in your Gmail and writes one calm briefing from them."
+              : "Connect Gmail and wout.daily finds your newsletters by itself."}
+          </p>
+          {connected && (
+            <PressButton variant="primary" className="mt-8" onClick={briefing.make} disabled={briefing.busy} icon={<Plus className="h-4 w-4" strokeWidth={2} />}>
+              {briefing.label ?? "Make my first briefing"}
+            </PressButton>
+          )}
         </div>
       ) : (
         <>
