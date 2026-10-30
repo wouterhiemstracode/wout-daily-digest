@@ -139,17 +139,50 @@ export function PressSidebar({ footer, className }: { footer?: React.ReactNode; 
  * App shell. Edition screens (Today, reading view) lay themselves out;
  * the older screens get the padded column they were written for.
  */
+/* ── Phone tab bar (< 768px) ────────────────────────────── */
+export function PhoneTabBar() {
+  const [location] = useLocation();
+  return (
+    <nav className="md:hidden fixed bottom-3 inset-x-3 z-40 rounded-2xl bg-side text-side-ink-2 grid grid-cols-4 p-1.5" style={{ boxShadow: "var(--overlay-shadow)" }} aria-label="Main">
+      {PRESS_NAV.map((item) => {
+        const Icon = item.icon;
+        const active = isNavActive(item.href, location);
+        return (
+          <Link key={item.href} href={item.href}>
+            <div
+              className={cn("flex flex-col items-center justify-center gap-1 h-14 rounded-xl cursor-pointer transition-colors", active ? "bg-sage text-sage-ink" : "active:bg-side-active")}
+              aria-current={active ? "page" : undefined}
+            >
+              <Icon className="h-5 w-5" strokeWidth={1.75} />
+              <span className="font-sans text-[11px] font-medium leading-none">{item.label}</span>
+            </div>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
 export function PressLayout({ children, padded }: { children: React.ReactNode; padded?: boolean }) {
   const [night, setNight] = useEdition();
   return (
     <div className="flex h-dvh w-full bg-paper text-ink overflow-hidden">
       <PressSidebar className="hidden md:flex" footer={<NightToggle night={night} onChange={setNight} />} />
       <main className="flex-1 h-dvh overflow-y-auto">
-        <header className="md:hidden px-4 pt-4 pb-2">
+        <header className="md:hidden h-[60px] px-4 flex items-center justify-between">
           <Masthead />
+          <button
+            onClick={() => setNight(!night)}
+            className="h-10 w-10 -mr-2 rounded-full grid place-items-center text-ink-2 active:bg-paper-sunk"
+            aria-label={night ? "Day edition" : "Night edition"}
+            aria-pressed={night}
+          >
+            {night ? <Sun className="h-5 w-5" strokeWidth={1.75} /> : <Moon className="h-5 w-5" strokeWidth={1.75} />}
+          </button>
         </header>
-        {padded ? <div className="max-w-5xl mx-auto w-full px-4 py-6 md:px-12 md:py-10">{children}</div> : children}
+        {padded ? <div className="max-w-5xl mx-auto w-full px-4 pt-2 pb-28 md:px-12 md:py-10">{children}</div> : children}
       </main>
+      <PhoneTabBar />
     </div>
   );
 }

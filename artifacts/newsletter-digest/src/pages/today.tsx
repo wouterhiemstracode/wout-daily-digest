@@ -14,6 +14,8 @@ import {
 } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { PhoneDeck } from "@/components/press/phone-deck";
 import { PressButton, SectionHeader } from "@/components/press/primitives";
 import { SortCard } from "@/components/press/sort-card";
 import { ReadingListItem, SenderRow, SectionTile } from "@/components/press/stories";
@@ -64,10 +66,8 @@ function useSortDesk(digestId: number | undefined, stories: EditionStory[]) {
     });
   }, [history]);
 
-  return { queue, current, kept, skipped, decide, undo, canUndo: history.length > 0 };
+  return { queue, current, kept, skipped, decisions, decide, undo, canUndo: history.length > 0 };
 }
-
-export type SortDesk = ReturnType<typeof useSortDesk>;
 
 export default function Today() {
   const { data: digest, isLoading, refetch } = useGetLatestDigest();
@@ -78,6 +78,7 @@ export default function Today() {
   });
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const isPhone = useIsMobile();
 
   const allStories = React.useMemo(() => flattenStories(digest?.sections), [digest]);
   const stories = React.useMemo(() => uniqueStories(allStories), [allStories]);
@@ -125,13 +126,30 @@ export default function Today() {
 
   const sectionsForTiles = (digest?.sections ?? []).filter((s) => s.sectionType !== "top_stories" && s.stories.length > 0);
 
+  if (isPhone && digest && stories.length > 0) {
+    return (
+      <PhoneDeck
+        digestId={digest.id}
+        stories={stories}
+        queue={queue}
+        kept={kept}
+        decisions={desk.decisions}
+        onDecide={decide}
+        onUndo={undo}
+        canUndo={desk.canUndo}
+        sources={bySource}
+        sections={sectionsForTiles.map((sec) => ({ ...sec, stories: allStories.filter((s) => s.sectionId === sec.id) }))}
+      />
+    );
+  }
+
   return (
-    <div className="max-w-[1200px] mx-auto px-12 pt-10 pb-16">
+    <div className="max-w-[1200px] mx-auto px-4 md:px-12 pt-4 md:pt-10 pb-28 md:pb-16">
       {/* ── Header ─────────────────────────────── */}
-      <header className="flex items-end justify-between gap-10 pt-2 pb-10">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-10 pt-2 pb-8 md:pb-10">
         <div className="min-w-0">
           <div className="t-meta">{editionDate}{digest && ` · Edition ${digest.id} · ${stories.length} stories`}</div>
-          <h1 className="t-display text-ink mt-3">{greeting()}, Wout</h1>
+          <h1 className="t-display max-md:text-[36px] max-md:leading-[42px] text-ink mt-3">{greeting()}, Wout</h1>
           {intro && <p className="t-standfirst mt-3 max-w-[60ch]">{intro}</p>}
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -155,7 +173,7 @@ export default function Today() {
       </header>
 
       {authStatus && !authStatus.connected && (
-        <div className="mb-8 flex items-center justify-between gap-6 bg-sec-ai-soft px-6 py-4 rounded-2xl">
+        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 bg-sec-ai-soft px-6 py-4 rounded-2xl">
           <p className="font-serif text-[16px] leading-6 text-ink">Connect Gmail so tomorrow’s newsletters can go to press.</p>
           <a href={authUrl?.url || "#"} className="h-10 px-5 shrink-0 inline-flex items-center rounded-full bg-sage text-sage-ink font-sans font-medium text-[14px]">Connect Gmail</a>
         </div>
