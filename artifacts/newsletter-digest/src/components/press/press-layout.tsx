@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
-import { Newspaper, Archive, Users, Search, LogOut } from "lucide-react";
+import { Newspaper, Archive, Users, Search, Moon, Sun, LogOut } from "lucide-react";
 import { useGetGmailAuthStatus, useDisconnectGmail, useGetLatestDigest } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
 import { Masthead } from "./primitives";
@@ -22,6 +22,57 @@ export function useEditionLine() {
   const { data: digest } = useGetLatestDigest();
   if (!digest) return undefined;
   return `Edition ${digest.id} · ${format(new Date(digest.date + "T12:00:00"), "EEEE d MMM")}`;
+}
+
+/* ── Night edition (dark mode) ──────────────────────────── */
+const EDITION_KEY = "wout.daily:edition";
+
+function readStoredEdition() {
+  try {
+    return localStorage.getItem(EDITION_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** Day or night edition: `?edition=night|day` wins, then the reader's last choice. */
+export function useEdition() {
+  const [night, setNight] = React.useState(() => {
+    if (typeof window === "undefined") return false;
+    const q = new URLSearchParams(window.location.search).get("edition");
+    if (q) return q === "night";
+    return readStoredEdition() === "night";
+  });
+  React.useEffect(() => {
+    document.documentElement.classList.toggle("dark", night);
+  }, [night]);
+  const choose = React.useCallback((v: boolean) => {
+    try {
+      localStorage.setItem(EDITION_KEY, v ? "night" : "day");
+    } catch {
+      // private mode: the choice lasts for this visit
+    }
+    setNight(v);
+  }, []);
+  return [night, choose] as const;
+}
+
+export function NightToggle({ night, onChange }: { night: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      onClick={() => onChange(!night)}
+      className="w-full flex items-center justify-between gap-3 px-3 h-10 rounded-[10px] text-side-ink-2 hover:bg-side-active hover:text-side-ink transition-colors"
+      aria-pressed={night}
+    >
+      <span className="flex items-center gap-3 t-label">
+        {night ? <Sun className="h-4 w-4" strokeWidth={1.75} /> : <Moon className="h-4 w-4" strokeWidth={1.75} />}
+        {night ? "Day edition" : "Night edition"}
+      </span>
+      <span className={cn("relative h-5 w-9 rounded-full transition-colors", night ? "bg-sage" : "bg-side-rule")}>
+        <span className={cn("absolute top-[3px] h-3.5 w-3.5 rounded-full transition-all bg-side-ink", night ? "left-[19px]" : "left-[3px]")} />
+      </span>
+    </button>
+  );
 }
 
 /* ── Sidebar nav ────────────────────────────────────────── */
@@ -89,9 +140,10 @@ export function PressSidebar({ footer, className }: { footer?: React.ReactNode; 
  * the older screens get the padded column they were written for.
  */
 export function PressLayout({ children, padded }: { children: React.ReactNode; padded?: boolean }) {
+  const [night, setNight] = useEdition();
   return (
     <div className="flex h-dvh w-full bg-paper text-ink overflow-hidden">
-      <PressSidebar className="hidden md:flex" />
+      <PressSidebar className="hidden md:flex" footer={<NightToggle night={night} onChange={setNight} />} />
       <main className="flex-1 h-dvh overflow-y-auto">
         <header className="md:hidden px-4 pt-4 pb-2">
           <Masthead />

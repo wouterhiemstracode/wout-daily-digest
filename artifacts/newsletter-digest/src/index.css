@@ -118,6 +118,33 @@
   --radius: 12px;
 }
 
+.dark {
+  /* Night: warm near-black, deep muted tints, brighter green */
+  --paper: #161614;
+  --paper-raised: #201F1C;
+  --paper-sunk: #2A2925;
+  --ink: #EEE9DF;
+  --ink-2: #BEB8AC;
+  --ink-3: #969083;
+  --rule: #33312C;
+  --sage: #8CC49A;
+  --sage-ink: #161614;
+  --sage-soft: #23331F;
+  --danger: #E39A82;
+  --positive: #8CC49A;
+  --side: #0F0F0E;
+  --side-ink: #EEE9DF;
+  --side-ink-2: #969083;
+  --side-rule: #23221F;
+  --side-active: #201F1C;
+  --sec-top: #E3CB7E;     --sec-top-soft: #352E17;
+  --sec-ai: #A9D29C;      --sec-ai-soft: #23331F;
+  --sec-product: #EDB394; --sec-product-soft: #3A261C;
+  --sec-eng: #BDB2EC;     --sec-eng-soft: #2A2540;
+  --sec-jobs: #9CCBE3;    --sec-jobs-soft: #1B2F3A;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+}
+
 /* Mapping is declared on both scopes so a .dark panel re-resolves it. */
 :root, .dark {
   --background: var(--paper);
@@ -154,6 +181,7 @@
 @layer base {
   * { @apply border-border; }
   html { color-scheme: light; }
+  html.dark { color-scheme: dark; }
   body {
     @apply antialiased bg-background text-foreground;
     font-family: var(--font-sans);
