@@ -46,7 +46,10 @@ export interface ApiLog {
 }
 
 /** Answer /api/* like the real server does, and record what the page sent. */
-export async function mockApi(page: Page, opts: { digest?: Digest | null; connected?: boolean; signedIn?: boolean } = {}) {
+export async function mockApi(
+  page: Page,
+  opts: { digest?: Digest | null; connected?: boolean; signedIn?: boolean; streak?: number; newEmails?: number; gmailDown?: boolean } = {},
+) {
   const digest = opts.digest === undefined ? demoDigest() : opts.digest;
   const senders = demoSenderList();
   const log: ApiLog = { feedback: [], senderUpdates: [], syncs: 0, generates: 0 };
@@ -81,7 +84,11 @@ export async function mockApi(page: Page, opts: { digest?: Digest | null; connec
     }
     if (path === "/emails/sync") {
       log.syncs++;
-      return json({ fetched: 4, senders: 6, discovered: 1, errors: [] });
+      if (opts.gmailDown) return json({ error: "Gmail not connected" }, 400);
+      return json({ fetched: opts.newEmails ?? 4, senders: 6, discovered: 1, errors: [] });
+    }
+    if (path === "/stats") {
+      return json({ totalDigests: 5, totalStories: 60, totalSenders: 6, emailsProcessed: 40, lastDigestDate: null, lastSyncAt: null, streakDays: opts.streak ?? 0 });
     }
     if (path === "/digests/generate") {
       log.generates++;

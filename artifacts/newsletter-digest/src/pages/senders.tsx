@@ -15,6 +15,7 @@ import { useBriefing } from "@/hooks/use-briefing";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PressButton } from "@/components/press/primitives";
+import { Croc } from "@/components/press/croc";
 import { SourceAvatar } from "@/components/press/stories";
 import { cn } from "@/lib/utils";
 
@@ -53,7 +54,9 @@ export default function Senders() {
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8">
         <div>
           <div className="t-meta">{senders ? `${on} of ${senders.length} on` : " "}</div>
-          <h1 className="t-h1 text-ink mt-2">My sources</h1>
+          <h1 className="t-h1 text-ink mt-2 flex items-center gap-3">
+            My sources <Croc mood="curious" className="w-16" />
+          </h1>
           <p className="t-standfirst mt-2 max-w-[52ch]">
             wout.daily finds the newsletters in your Gmail by itself. Switch off any you don’t want in your briefing.
           </p>
@@ -77,6 +80,7 @@ export default function Senders() {
         </div>
       ) : sorted.length === 0 ? (
         <div className="rounded-[20px] bg-paper-raised px-6 py-12 text-center">
+          <Croc mood="curious" pose="card" className="mx-auto w-28 mb-4" />
           <h2 className="t-h3 text-ink">No newsletters found yet</h2>
           <p className="t-body-sm mt-2 max-w-[44ch] mx-auto">
             {authStatus?.connected

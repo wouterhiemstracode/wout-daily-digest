@@ -180,6 +180,8 @@ export interface Stats {
   lastDigestDate?: string | null;
   /** @nullable */
   lastSyncAt?: string | null;
+  /** Days in a row (in the reader's time zone) on which at least one story was kept or skipped */
+  streakDays: number;
 }
 
 export type ListEmailsParams = {

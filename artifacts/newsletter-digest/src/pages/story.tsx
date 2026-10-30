@@ -6,6 +6,7 @@ import { useGetDigest, getGetDigestQueryKey } from "@workspace/api-client-react"
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { SectionKicker, SourceAvatar } from "@/components/press/stories";
+import { Croc } from "@/components/press/croc";
 import { flattenStories, readMinutes, storyHref, uniqueStories } from "@/lib/press";
 
 function hostOf(url?: string | null) {
@@ -119,8 +120,13 @@ export default function StoryPage() {
         </div>
         )}
 
+        <div className="mt-14 flex items-center justify-center gap-3" aria-hidden>
+          <Croc mood="idle" prop="glasses" className="w-16" />
+          <span className="t-caption">That’s the story.</span>
+        </div>
+
         {/* Why it matters + takeaways */}
-        <aside className={cn("mt-14 grid gap-4", story.takeaways.length > 0 && "md:grid-cols-2")}>
+        <aside className={cn("mt-6 grid gap-4", story.takeaways.length > 0 && "md:grid-cols-2")}>
           <div className="rounded-2xl bg-paper-raised p-6">
             <div className="font-sans text-[14px] font-semibold text-sage">Why it matters</div>
             <p className="font-serif text-[17px] leading-[28px] text-ink mt-2">{story.whyItMatters}</p>

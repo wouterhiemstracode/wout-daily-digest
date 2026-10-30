@@ -13,6 +13,7 @@ import Search from "@/pages/search";
 import NotFound from "@/pages/not-found";
 import SignIn from "@/pages/sign-in";
 import Privacy from "@/pages/privacy";
+import PeekSheet from "@/pages/peek";
 
 const signedOut = (err: unknown) => err instanceof ApiError && err.status === 401;
 
@@ -62,6 +63,7 @@ function App() {
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <Switch>
             <Route path="/privacy" component={Privacy} />
+            <Route path="/peek" component={PeekSheet} />
             <Route>
               <SessionGate>
                 <Router />
