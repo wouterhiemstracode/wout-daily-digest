@@ -5,6 +5,8 @@ import { Newspaper, Archive, Users, Search, Moon, Sun, LogOut } from "lucide-rea
 import { useGetGmailAuthStatus, useSignOut, useGetLatestDigest } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
 import { Masthead } from "./primitives";
+import { useNightEdition } from "./croc";
+import { Dragonfly, LilyPad, PEEK_LOOKS, Reeds, Wading, Water } from "./habitat";
 
 export const PRESS_NAV = [
   { href: "/", label: "Today", icon: Newspaper },
@@ -81,6 +83,7 @@ export function PressSidebar({ footer, className }: { footer?: React.ReactNode; 
   const edition = useEditionLine();
   const { data: authStatus } = useGetGmailAuthStatus();
   const signOut = useSignOut();
+  const night = useNightEdition();
 
   return (
     <aside className={cn("w-64 shrink-0 bg-side text-side-ink flex flex-col", className)}>
@@ -107,8 +110,15 @@ export function PressSidebar({ footer, className }: { footer?: React.ReactNode; 
           );
         })}
       </nav>
-      {footer && <div className="px-3 pb-3">{footer}</div>}
-      <div className="mx-3 mb-3 rounded-xl bg-side-active px-4 py-3">
+      {footer && <div className="px-3 pb-1">{footer}</div>}
+      {/* Peek's pond: the inbox card floats in it, Peek keeps an eye on it from behind. */}
+      <div className="relative overflow-hidden px-3 pb-3 pt-9">
+        <Water tone="side" className="absolute inset-x-0 top-[18px] bottom-0" />
+        <Reeds tone="side" rushes={1} className="absolute -left-3 bottom-14 h-[64px] w-[40px]" />
+        <Reeds tone="side" flip rushes={0} className="absolute -right-2 bottom-14 h-[56px] w-[34px]" />
+        <LilyPad tone="side" flower className="absolute left-[58px] top-[20px] w-9" />
+        <Wading look={night ? PEEK_LOOKS.dozer : PEEK_LOOKS.lurker} className="absolute right-[40px] top-[-8px] w-[76px]" />
+        <div className="relative rounded-xl bg-side-active px-4 py-3">
         <div className="font-sans text-[12px] text-side-ink-2 mb-1.5">Inbox</div>
         {authStatus?.connected ? (
           <div className="flex items-center justify-between gap-2">
@@ -130,6 +140,7 @@ export function PressSidebar({ footer, className }: { footer?: React.ReactNode; 
             <span className="h-1.5 w-1.5 rounded-full bg-danger shrink-0" /> Gmail not connected
           </span>
         )}
+        </div>
       </div>
     </aside>
   );
@@ -143,6 +154,14 @@ export function PressSidebar({ footer, className }: { footer?: React.ReactNode; 
 export function PhoneTabBar() {
   const [location] = useLocation();
   return (
+    <>
+    {/* The tab bar floats on Peek's pond; Peek peeks over its top edge. */}
+    <div aria-hidden className="md:hidden pointer-events-none fixed inset-x-0 bottom-0 z-40 h-[58px]">
+      <Water className="absolute inset-0" />
+      <Reeds rushes={1} className="absolute -left-2 bottom-5 h-[74px] w-[34px]" />
+      <Reeds flip rushes={0} className="absolute -right-2 bottom-5 h-[64px] w-[30px]" />
+    </div>
+    <Wading look={{ ...PEEK_LOOKS.lurker, tune: { ...PEEK_LOOKS.lurker.tune, depth: 0 } }} className="md:hidden fixed bottom-[74px] right-[78px] z-40 w-[64px]" />
     <nav className="md:hidden fixed bottom-3 inset-x-3 z-40 rounded-2xl bg-side text-side-ink-2 grid grid-cols-4 p-1.5" style={{ boxShadow: "var(--overlay-shadow)" }} aria-label="Main">
       {PRESS_NAV.map((item) => {
         const Icon = item.icon;
@@ -160,6 +179,22 @@ export function PhoneTabBar() {
         );
       })}
     </nav>
+    </>
+  );
+}
+
+/** The edge of Peek's pond along the foot of the padded screens, behind the content. */
+function PondEdge() {
+  return (
+    <div aria-hidden className="hidden md:block pointer-events-none sticky bottom-0 -mt-[150px] h-[150px]">
+      <Water className="absolute inset-x-0 bottom-0 h-[54px]" />
+      <Reeds className="absolute right-6 bottom-6 h-[150px] w-[80px]" />
+      <Reeds flip rushes={1} className="absolute right-[88px] bottom-7 h-[96px] w-[54px]" />
+      <Reeds rushes={0} className="absolute left-4 bottom-6 h-[84px] w-[46px]" />
+      <LilyPad flower className="absolute left-[18%] bottom-[14px] w-14" />
+      <LilyPad flip className="absolute right-[24%] bottom-[22px] w-10" />
+      <Dragonfly className="absolute right-[150px] bottom-[96px] w-8" />
+    </div>
   );
 }
 
@@ -180,7 +215,12 @@ export function PressLayout({ children, padded }: { children: React.ReactNode; p
             {night ? <Sun className="h-5 w-5" strokeWidth={1.75} /> : <Moon className="h-5 w-5" strokeWidth={1.75} />}
           </button>
         </header>
-        {padded ? <div className="max-w-5xl mx-auto w-full px-4 pt-2 pb-28 md:px-12 md:py-10">{children}</div> : children}
+        {padded ? (
+          <div className="min-h-full flex flex-col">
+            <div className="relative z-10 flex-1 max-w-5xl mx-auto w-full px-4 pt-2 pb-28 md:px-12 md:py-10 md:pb-40">{children}</div>
+            <PondEdge />
+          </div>
+        ) : children}
       </main>
       <PhoneTabBar />
     </div>

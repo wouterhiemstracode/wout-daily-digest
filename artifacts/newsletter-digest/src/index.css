@@ -212,14 +212,14 @@
 .croc { overflow: visible; display: block; }
 .croc * { transform-box: fill-box; }
 .croc__skin { fill: var(--sage); }
-.croc__eye { fill: #FFFFFF; }
-.croc__pupil { fill: #2A2925; transform-origin: center; }
-.croc__line { fill: none; stroke: #2A2925; stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; }
+.croc__eye { fill: var(--croc-eye, #FFFFFF); }
+.croc__pupil { fill: var(--croc-pupil, #2A2925); transform-origin: center; }
+.croc__line { fill: none; stroke: var(--croc-ink, #2A2925); stroke-width: var(--croc-line, 3.4); stroke-linecap: round; stroke-linejoin: round; }
 .croc__nostril { fill: color-mix(in srgb, var(--sage) 55%, #000); }
 .croc__scute { fill: none; stroke: color-mix(in srgb, var(--sage) 55%, #000); stroke-width: 2.5; }
-.croc__lid { fill: var(--sage); transform-origin: 50% 0%; transform: scaleY(0); animation: croc-blink 4.5s infinite; }
+.croc__lid { fill: var(--sage); transform-origin: 50% 0%; transform: scaleY(var(--croc-lid, 0)); animation: croc-blink 4.5s infinite; }
 .croc__lid--squint { animation: none; transform: scaleY(.55); }
-.croc__blush { fill: #F2B8A6; opacity: .75; }
+.croc__blush { fill: var(--croc-blush, #F2B8A6); opacity: .75; }
 .croc__sweat { fill: var(--sec-jobs-soft); stroke: var(--sec-jobs); stroke-width: 1; }
 .croc__frames { fill: none; stroke: #2A2925; stroke-width: 3; }
 .croc__shades { fill: #2A2925; }
@@ -233,6 +233,16 @@
 .croc__card { fill: var(--paper-raised); stroke: var(--rule); stroke-width: 2; }
 .croc__wave { fill: none; stroke: var(--sage); stroke-width: 3; stroke-linecap: round; opacity: .5; }
 .croc__body { transform-origin: 50% 100%; }
+.croc__skin--far { fill: color-mix(in srgb, var(--sage) 78%, #000); }
+.croc__belly { fill: var(--croc-belly, color-mix(in srgb, var(--sage) 55%, #F4EFE6)); }
+.croc__teeth { fill: #FFFFFF; }
+.croc__shadow { fill: var(--rule); opacity: .8; }
+.croc__drop { fill: var(--sage); opacity: .45; }
+.croc__wall { fill: var(--paper-sunk); }
+.croc__claw { fill: none; stroke: color-mix(in srgb, var(--sage) 55%, #000); stroke-width: 1.6; stroke-linecap: round; }
+.croc__wall-edge { stroke: var(--rule); stroke-width: 3; }
+.croc__tail--long { transform-origin: 100% 60%; }
+.croc--no-blink .croc__lid { animation: none; }
 .croc__tail { transform-origin: 30% 100%; animation: croc-flick 2.4s ease-in-out infinite; }
 .croc__zzz text { font: 600 18px var(--font-sans); fill: var(--ink-3); animation: croc-z 2.6s ease-out infinite; }
 .croc__zzz text:nth-child(2) { animation-delay: .9s; }
@@ -250,7 +260,7 @@
 .croc--sleepy .croc__body, .croc--bored .croc__body { animation: croc-bob 6s ease-in-out infinite; }
 .croc--worried .croc__body { animation: croc-shiver 2.4s ease-in-out infinite; }
 
-@keyframes croc-blink { 0%, 92%, 100% { transform: scaleY(0); } 95% { transform: scaleY(1); } }
+@keyframes croc-blink { 0%, 92%, 100% { transform: scaleY(var(--croc-lid, 0)); } 95% { transform: scaleY(1); } }
 @keyframes croc-rise { from { transform: translateY(34px); } to { transform: translateY(0); } }
 @keyframes croc-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @keyframes croc-scan { 0%, 100% { transform: translateX(-3px); } 50% { transform: translateX(3px); } }
@@ -266,9 +276,93 @@
 .confetti span { position: absolute; width: 9px; height: 9px; border-radius: 3px; animation: confetti-pop 1.1s ease-out forwards; }
 @keyframes confetti-pop { from { transform: translate(0, 0) scale(.4); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; } }
 
+/* Design tools: preview reduced motion without the OS setting. */
+.croc-still .croc *, .croc-still .confetti span { animation: none !important; }
+.croc-still .croc--sleepy .croc__lid, .croc-still .croc--bored .croc__lid { transform: scaleY(.65); }
+
 @media (prefers-reduced-motion: reduce) {
   .croc *, .confetti span { animation: none !important; }
   .croc--sleepy .croc__lid, .croc--bored .croc__lid { transform: scaleY(.65); }
   .croc__lid--squint { transform: scaleY(.55); }
   .confetti { display: none; }
+}
+
+/* ── Peek's habitat (components/press/habitat.tsx) ──────── */
+.hab {
+  --hab-water: color-mix(in srgb, var(--sec-jobs-soft) 78%, var(--paper));
+  --hab-deep: color-mix(in srgb, var(--sec-jobs-soft) 84%, var(--sec-jobs));
+  --hab-crest: color-mix(in srgb, #FFFFFF 75%, var(--sec-jobs-soft));
+  --hab-ripple: color-mix(in srgb, var(--sec-jobs) 22%, var(--sec-jobs-soft));
+  --hab-reed: var(--sage);
+  --hab-reed-2: color-mix(in srgb, var(--sage) 62%, #B9CC7A);
+  --hab-rush: color-mix(in srgb, var(--sec-product) 62%, var(--sec-top));
+  --hab-pad: color-mix(in srgb, var(--sage) 72%, #B9CC7A);
+  --hab-flower: #F2B8A6;
+  --hab-flower-2: #F8DCD2;
+  --hab-bank: color-mix(in srgb, var(--paper-sunk) 88%, var(--sage));
+  --hab-wing: color-mix(in srgb, #FFFFFF 55%, var(--sec-jobs-soft));
+  --hab-fly: var(--sec-jobs);
+  pointer-events: none;
+}
+.hab--side {
+  --hab-water: color-mix(in srgb, var(--sec-jobs) 26%, var(--side));
+  --hab-deep: color-mix(in srgb, var(--sec-jobs) 14%, var(--side));
+  --hab-crest: color-mix(in srgb, var(--sec-jobs-soft) 34%, var(--side));
+  --hab-ripple: color-mix(in srgb, var(--sec-jobs-soft) 16%, var(--side));
+  --hab-reed: color-mix(in srgb, var(--sage) 82%, var(--side));
+  --hab-reed-2: color-mix(in srgb, var(--sage) 52%, var(--side));
+  --hab-pad: color-mix(in srgb, var(--sage) 72%, var(--side));
+  --hab-wing: color-mix(in srgb, var(--sec-jobs-soft) 30%, transparent);
+  --hab-fly: var(--sec-jobs-soft);
+}
+.dark .hab:not(.hab--side) {
+  --hab-water: var(--sec-jobs-soft);
+  --hab-deep: color-mix(in srgb, var(--sec-jobs-soft) 70%, #000);
+  --hab-crest: color-mix(in srgb, var(--sec-jobs) 40%, var(--sec-jobs-soft));
+  --hab-ripple: color-mix(in srgb, var(--sec-jobs) 22%, var(--sec-jobs-soft));
+  --hab-bank: var(--paper-sunk);
+  --hab-wing: color-mix(in srgb, var(--sec-jobs) 30%, transparent);
+}
+.dark .hab--side {
+  --hab-water: color-mix(in srgb, var(--sec-jobs) 16%, var(--side));
+  --hab-deep: color-mix(in srgb, var(--sec-jobs) 8%, var(--side));
+  --hab-crest: color-mix(in srgb, var(--sec-jobs) 34%, var(--side));
+}
+.hab * { transform-box: fill-box; }
+.hab-water { overflow: hidden; background: linear-gradient(to bottom, transparent 8px, var(--hab-water) 8px, var(--hab-deep)); }
+.hab-drift { position: absolute; top: 0; left: 0; width: calc(100% + 96px); height: 100%; animation: hab-drift 18s linear infinite; }
+.hab-water__crest { fill: var(--hab-water); }
+.hab-water__foam { fill: none; stroke: var(--hab-crest); stroke-width: 2.5; stroke-linecap: round; }
+.hab-water__ripple { fill: none; stroke: var(--hab-ripple); stroke-width: 2; stroke-linecap: round; }
+.hab-reeds { overflow: visible; }
+.hab-reeds__blade { fill: var(--hab-reed); }
+.hab-reeds__blade--far { fill: var(--hab-reed-2); }
+.hab-reeds__stem { fill: none; stroke: var(--hab-reed-2); stroke-width: 2.5; stroke-linecap: round; }
+.hab-reeds__rush { fill: var(--hab-rush); }
+.hab-sway { transform-origin: 50% 100%; animation: hab-sway 7s ease-in-out infinite; }
+.hab-pad { overflow: visible; }
+.hab-pad__shadow { fill: var(--hab-deep); opacity: .55; }
+.hab-pad__leaf { fill: var(--hab-pad); }
+.hab-pad__vein { fill: none; stroke: color-mix(in srgb, var(--hab-pad) 70%, #000); stroke-width: 1.2; stroke-linecap: round; opacity: .5; }
+.hab-pad__petal { fill: var(--hab-flower); }
+.hab-pad__petal--back { fill: var(--hab-flower-2); }
+.hab-pad__heart { fill: var(--sec-top-soft); }
+.hab-bob { animation: hab-bob 5.5s ease-in-out infinite; }
+.hab-bank__sand { fill: var(--hab-bank); }
+.hab-bank__lip { fill: none; stroke: color-mix(in srgb, var(--hab-bank) 60%, #FFFFFF); stroke-width: 2; stroke-linecap: round; opacity: .7; }
+.hab-bank__grass { fill: none; stroke: var(--sage); stroke-width: 2.2; stroke-linecap: round; }
+.hab-fly { overflow: visible; animation: hab-hover 11s ease-in-out infinite; }
+.hab-fly__wing { fill: var(--hab-wing); stroke: var(--hab-fly); stroke-width: .8; stroke-opacity: .5; }
+.hab-fly__wings { transform-origin: 50% 50%; animation: hab-flutter .16s linear infinite alternate; }
+.hab-fly__body { stroke: var(--hab-fly); stroke-width: 2.6; stroke-linecap: round; }
+.hab-fly__head { fill: var(--hab-fly); }
+.hab-wade { overflow: hidden; pointer-events: none; }
+@keyframes hab-drift { to { transform: translateX(-96px); } }
+@keyframes hab-sway { 0%, 100% { transform: rotate(-1.6deg); } 50% { transform: rotate(2.2deg); } }
+@keyframes hab-bob { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-1.5px) rotate(-1.5deg); } }
+@keyframes hab-flutter { from { transform: scaleY(1); } to { transform: scaleY(.55); } }
+@keyframes hab-hover { 0%, 100% { transform: translate(0, 0) rotate(0); } 20% { transform: translate(-26px, -10px) rotate(-6deg); } 45% { transform: translate(-30px, 6px) rotate(0); } 70% { transform: translate(8px, -4px) rotate(5deg); } }
+.croc-still .hab, .croc-still .hab * { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .hab, .hab * { animation: none !important; }
 }
