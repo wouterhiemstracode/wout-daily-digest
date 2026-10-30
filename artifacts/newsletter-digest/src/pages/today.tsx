@@ -21,20 +21,27 @@ import { flattenStories, greeting, storyHref, uniqueStories, type EditionStory }
 
 type Decision = "up" | "down";
 
-/** The sorting desk: one story at a time, kept or skipped. Every decision and undo is sent as story feedback. */
+/**
+ * The sorting desk: one story at a time, kept or skipped. Every decision and undo is sent as story feedback.
+ * The latest state lives in a ref as well, so quick key presses or taps each act on the next story.
+ */
 function useSortDesk(digestId: number | undefined, stories: EditionStory[]) {
-  const [decisions, setDecisions] = React.useState<Record<number, Decision>>({});
-  const [history, setHistory] = React.useState<number[]>([]);
+  const [desk, setDesk] = React.useState<{ decisions: Record<number, Decision>; history: number[] }>({ decisions: {}, history: [] });
+  const latest = React.useRef(desk);
+  const commit = (next: typeof desk) => {
+    latest.current = next;
+    setDesk(next);
+  };
   React.useEffect(() => {
-    const initial: Record<number, Decision> = {};
+    const decisions: Record<number, Decision> = {};
     stories.forEach((s) => {
-      if (s.userFeedback === "up" || s.userFeedback === "down") initial[s.id] = s.userFeedback;
+      if (s.userFeedback === "up" || s.userFeedback === "down") decisions[s.id] = s.userFeedback;
     });
-    setDecisions(initial);
-    setHistory([]);
+    commit({ decisions, history: [] });
   }, [digestId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const feedback = useSubmitFeedback();
+  const { decisions, history } = desk;
   const queue = stories.filter((s) => !decisions[s.id]);
   const current = queue[0] ?? null;
   const kept = stories.filter((s) => decisions[s.id] === "up");
@@ -42,24 +49,23 @@ function useSortDesk(digestId: number | undefined, stories: EditionStory[]) {
 
   const decide = React.useCallback(
     (rating: Decision) => {
-      if (!current) return;
-      setDecisions((d) => ({ ...d, [current.id]: rating }));
-      setHistory((h) => [...h, current.id]);
-      feedback.mutate({ data: { storyId: current.id, rating } });
+      const { decisions, history } = latest.current;
+      const next = stories.find((s) => !decisions[s.id]);
+      if (!next) return;
+      commit({ decisions: { ...decisions, [next.id]: rating }, history: [...history, next.id] });
+      feedback.mutate({ data: { storyId: next.id, rating } });
     },
-    [current, feedback],
+    [stories, feedback],
   );
   const undo = React.useCallback(() => {
+    const { decisions, history } = latest.current;
     const last = history[history.length - 1];
     if (last === undefined) return;
-    setHistory((h) => h.slice(0, -1));
-    setDecisions((d) => {
-      const next = { ...d };
-      delete next[last];
-      return next;
-    });
+    const rest = { ...decisions };
+    delete rest[last];
+    commit({ decisions: rest, history: history.slice(0, -1) });
     feedback.mutate({ data: { storyId: last, rating: "none" } });
-  }, [history, feedback]);
+  }, [feedback]);
 
   return { queue, current, kept, skipped, decisions, decide, undo, canUndo: history.length > 0 };
 }
