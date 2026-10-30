@@ -46,8 +46,8 @@ export function sessionEmail(req: Request): string | null {
 }
 
 // Reachable without signing in: the sign-in flow itself, the health check, and the
-// webhooks, which check their own secret.
-const PUBLIC = [/^\/healthz$/, /^\/auth\/google\/(start|callback)$/, /^\/webhooks\//];
+// webhooks and scheduled jobs, which check their own secrets.
+const PUBLIC = [/^\/healthz$/, /^\/auth\/google\/(start|callback)$/, /^\/webhooks\//, /^\/jobs\//];
 
 export function requireSession(req: Request, res: Response, next: NextFunction) {
   if (PUBLIC.some((p) => p.test(req.path)) || sessionEmail(req)) {

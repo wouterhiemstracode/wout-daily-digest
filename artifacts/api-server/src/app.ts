@@ -8,7 +8,7 @@ import { logger } from "./lib/logger";
 import { requireSession } from "./lib/session";
 
 const app: Express = express();
-// Railway (and most hosts) terminate HTTPS in front of the app.
+// Cloud Run (and most hosts) terminate HTTPS in front of the app.
 app.set("trust proxy", 1);
 
 app.use(

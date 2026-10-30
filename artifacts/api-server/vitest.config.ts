@@ -1,7 +1,7 @@
 import { defineConfig } from "vitest/config";
 
-// Route tests run against a real Postgres: set TEST_DATABASE_URL to a throwaway database
-// with the schema pushed (`DATABASE_URL=… pnpm --filter @workspace/db run push`).
+// Route tests run against a real Postgres: set TEST_DATABASE_URL to a throwaway database.
+// The tests wipe it and build the schema from lib/db/migrations, as production does.
 export default defineConfig({
   test: {
     env: {
@@ -13,6 +13,7 @@ export default defineConfig({
       GOOGLE_CLIENT_ID: "test-client",
       GOOGLE_CLIENT_SECRET: "test-secret",
       WEBHOOK_SECRET: "hook-secret",
+      CRON_SECRET: "cron-secret",
       LOG_LEVEL: "silent",
     },
     fileParallelism: false,
