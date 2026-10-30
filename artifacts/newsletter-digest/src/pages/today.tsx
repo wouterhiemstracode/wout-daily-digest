@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { Plus, ArrowRight } from "lucide-react";
 import {
   useGetLatestDigest,
+  useGetStats,
   useListSenders,
   useGetGmailAuthStatus,
   useGetGmailAuthUrl,
@@ -14,6 +15,7 @@ import { useBriefing } from "@/hooks/use-briefing";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PhoneDeck } from "@/components/press/phone-deck";
+import { Croc, useCrocProp, useNightEdition } from "@/components/press/croc";
 import { PressButton, SectionHeader } from "@/components/press/primitives";
 import { SortCard } from "@/components/press/sort-card";
 import { ReadingListItem, SenderRow, SectionTile } from "@/components/press/stories";
@@ -27,6 +29,8 @@ type Decision = "up" | "down";
  */
 function useSortDesk(digestId: number | undefined, stories: EditionStory[]) {
   const [desk, setDesk] = React.useState<{ decisions: Record<number, Decision>; history: number[] }>({ decisions: {}, history: [] });
+  // What the croc reacts to: the last keep or skip (`n` replays the animation).
+  const [reaction, setReaction] = React.useState<{ mood: "keep" | "skip"; n: number } | null>(null);
   const latest = React.useRef(desk);
   const commit = (next: typeof desk) => {
     latest.current = next;
@@ -53,6 +57,7 @@ function useSortDesk(digestId: number | undefined, stories: EditionStory[]) {
       const next = stories.find((s) => !decisions[s.id]);
       if (!next) return;
       commit({ decisions: { ...decisions, [next.id]: rating }, history: [...history, next.id] });
+      setReaction((r) => ({ mood: rating === "up" ? "keep" : "skip", n: (r?.n ?? 0) + 1 }));
       feedback.mutate({ data: { storyId: next.id, rating } });
     },
     [stories, feedback],
@@ -64,10 +69,11 @@ function useSortDesk(digestId: number | undefined, stories: EditionStory[]) {
     const rest = { ...decisions };
     delete rest[last];
     commit({ decisions: rest, history: history.slice(0, -1) });
+    setReaction(null);
     feedback.mutate({ data: { storyId: last, rating: "none" } });
   }, [feedback]);
 
-  return { queue, current, kept, skipped, decisions, decide, undo, canUndo: history.length > 0 };
+  return { queue, current, kept, skipped, decisions, decide, undo, reaction, canUndo: history.length > 0 };
 }
 
 export default function Today() {
@@ -98,6 +104,11 @@ export default function Today() {
   }, [decide, undo]);
 
   const briefing = useBriefing();
+  const night = useNightEdition();
+  const crocProp = useCrocProp();
+  const { data: stats } = useGetStats();
+  const streak = stats?.streakDays ?? 0;
+  const makeBriefing = () => briefing.make({ hasBriefing: !!digest });
   const connected = !!authStatus?.connected;
 
   const editionDate = format(digest ? new Date(digest.date + "T12:00:00") : new Date(), "EEEE d MMMM yyyy");
@@ -129,6 +140,9 @@ export default function Today() {
         canUndo={desk.canUndo}
         sources={bySource}
         sections={sectionsForTiles.map((sec) => ({ ...sec, stories: allStories.filter((s) => s.sectionId === sec.id) }))}
+        reaction={desk.reaction}
+        crocProp={crocProp}
+        streak={streak}
       />
     );
   }
@@ -146,7 +160,7 @@ export default function Today() {
           <PressButton
             variant="primary"
             className="shrink-0 self-start md:self-auto"
-            onClick={briefing.make}
+            onClick={makeBriefing}
             disabled={briefing.busy}
             icon={<Plus className="h-4 w-4" strokeWidth={2} />}
           >
@@ -162,13 +176,47 @@ export default function Today() {
         </div>
       )}
 
+      {briefing.busy && (
+        <div role="status" className="mb-8 flex items-center gap-5 rounded-[20px] bg-paper-raised px-6 py-4">
+          <Croc mood="reading" pose="newspaper" className="w-20 shrink-0" />
+          <div>
+            <div className="t-label text-ink">{briefing.checking ? "Checking your Gmail…" : "Reading your newsletters…"}</div>
+            <div className="t-caption">Usually about a minute. Ads and receipts get skipped.</div>
+          </div>
+        </div>
+      )}
+
+      {briefing.outcome === "gmail-error" && (
+        <div role="alert" className="mb-8 flex flex-wrap items-center gap-5 rounded-[20px] bg-paper-raised px-6 py-4">
+          <Croc mood="worried" className="w-20 shrink-0" />
+          <div className="flex-1 min-w-[200px]">
+            <div className="t-label text-ink">Gmail didn’t answer</div>
+            <div className="t-caption">Couldn’t reach your inbox. Try again in a moment.</div>
+          </div>
+          <PressButton variant="primary" size="sm" onClick={makeBriefing}>Try again</PressButton>
+          <PressButton variant="ghost" size="sm" onClick={briefing.dismiss}>Dismiss</PressButton>
+        </div>
+      )}
+
+      {briefing.outcome === "quiet" && (
+        <div role="status" className="mb-8 flex flex-wrap items-center gap-5 rounded-[20px] bg-paper-raised px-6 py-4">
+          <Croc mood="bored" pose="card" className="w-20 shrink-0" />
+          <div className="flex-1 min-w-[200px]">
+            <div className="t-label text-ink">A quiet day</div>
+            <div className="t-caption">No new newsletters since your last briefing, so this one stays.</div>
+          </div>
+          <PressButton variant="ghost" size="sm" onClick={briefing.dismiss}>Dismiss</PressButton>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="grid grid-cols-[minmax(0,1fr)_340px] gap-6">
           <Skeleton className="h-[560px] rounded-[20px]" />
           <Skeleton className="h-[560px] rounded-[20px]" />
         </div>
       ) : !digest || stories.length === 0 ? (
-        <div className="py-24 text-center">
+        <div className="py-20 text-center">
+          <Croc mood={night ? "sleepy" : "hello"} pose="card" prop={crocProp} className="mx-auto w-36 mb-6" />
           <div className="t-meta">The press is quiet</div>
           <h2 className="t-h1 mt-3">No briefing yet</h2>
           <p className="t-standfirst mt-3 max-w-[48ch] mx-auto">
@@ -177,7 +225,7 @@ export default function Today() {
               : "Connect Gmail and wout.daily finds your newsletters by itself."}
           </p>
           {connected && (
-            <PressButton variant="primary" className="mt-8" onClick={briefing.make} disabled={briefing.busy} icon={<Plus className="h-4 w-4" strokeWidth={2} />}>
+            <PressButton variant="primary" className="mt-8" onClick={makeBriefing} disabled={briefing.busy} icon={<Plus className="h-4 w-4" strokeWidth={2} />}>
               {briefing.label ?? "Make my first briefing"}
             </PressButton>
           )}
@@ -195,11 +243,22 @@ export default function Today() {
               onUndo={undo}
               canUndo={desk.canUndo}
               kept={kept.length}
+              reaction={desk.reaction}
+              crocProp={crocProp}
               onStartReading={() => kept[0] && navigate(storyHref(digest.id, kept[0]))}
               className="min-h-[560px] self-start"
             />
 
             <aside className="space-y-6">
+              {streak >= 7 && (
+                <div className="rounded-[20px] bg-sage-soft p-5 flex items-center gap-4">
+                  <Croc mood="proud" className="w-16 shrink-0" />
+                  <div>
+                    <div className="t-label text-ink">{streak} days in a row</div>
+                    <div className="t-caption">You’ve sorted your briefing every day.</div>
+                  </div>
+                </div>
+              )}
               <div className="rounded-[20px] bg-ink text-paper p-6">
                 <div className="font-sans text-[13px] font-medium opacity-70">Left to sort</div>
                 <div className="flex items-baseline gap-2 mt-1">

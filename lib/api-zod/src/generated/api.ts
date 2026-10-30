@@ -329,7 +329,8 @@ export const GetStatsResponse = zod.object({
   "totalSenders": zod.number(),
   "emailsProcessed": zod.number(),
   "lastDigestDate": zod.string().nullish(),
-  "lastSyncAt": zod.string().nullish()
+  "lastSyncAt": zod.string().nullish(),
+  "streakDays": zod.number().describe('Days in a row (in the reader\'s time zone) on which at least one story was kept or skipped')
 })
 
 

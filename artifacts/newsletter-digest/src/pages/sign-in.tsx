@@ -1,4 +1,5 @@
 import { Masthead } from "@/components/press/primitives";
+import { Croc } from "@/components/press/croc";
 
 const MESSAGES: Record<string, string> = {
   denied: "That Google account isn’t on this wout.daily. Sign in with the account it was set up for.",
@@ -17,7 +18,8 @@ export default function SignIn() {
     <div className="min-h-dvh bg-paper text-ink grid place-items-center px-4">
       <main className="w-full max-w-[420px] rounded-[20px] bg-paper-raised p-8 text-center">
         <Masthead className="inline-block" />
-        <h1 className="t-h2 mt-8">Your newsletters, one calm briefing</h1>
+        <Croc mood="hello" prop="newspaper" tail className="mx-auto mt-8 w-36" />
+        <h1 className="t-h2 mt-4">Your newsletters, one calm briefing</h1>
         <p className="t-body-sm mt-3">
           Sign in with Google. wout.daily finds the newsletters in your Gmail and writes your briefing from them.
         </p>

@@ -230,6 +230,15 @@ describe.skipIf(!enabled)("api (needs TEST_DATABASE_URL)", async () => {
     await api.post("/api/feedback").send({ storyId, rating: "maybe" }).expect(400);
   });
 
+  it("stats count today's sorting as a one-day streak, and earlier days extend it", async () => {
+    expect((await api.get("/api/stats").expect(200)).body.streakDays).toBe(1);
+    const { feedbackTable } = await import("@workspace/db");
+    const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000);
+    await db.insert(feedbackTable).values([1, 2].map((n) => ({ storyId, rating: "up", createdAt: daysAgo(n) })));
+    await db.insert(feedbackTable).values({ storyId, rating: "none", createdAt: daysAgo(3) }); // an undo doesn't count
+    expect((await api.get("/api/stats")).body.streakDays).toBe(3);
+  });
+
   it("learns from keeps and skips: per newsletter and section, in the prompt and the scores", async () => {
     // Three editions where every Lenny story is kept and every Pragmatic Engineer story skipped.
     for (let i = 0; i < 3; i++) {

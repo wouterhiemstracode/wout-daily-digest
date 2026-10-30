@@ -4,6 +4,7 @@ import { ArrowRight, ArrowUpRight, Bookmark, Check, Clock, Undo2, X } from "luci
 import type { DigestSection } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
 import { SectionKicker, SourceAvatar } from "./stories";
+import { Confetti, Croc, type CrocProp } from "./croc";
 import { greeting, matchLabel, readMinutes, sectionColour, sectionTint, storyHref, type EditionStory } from "@/lib/press";
 
 type Sheet = "next" | "list" | "sources" | "sections";
@@ -27,6 +28,9 @@ export function PhoneDeck({
   canUndo,
   sources,
   sections,
+  reaction,
+  crocProp,
+  streak = 0,
 }: {
   digestId: number;
   stories: EditionStory[];
@@ -38,6 +42,9 @@ export function PhoneDeck({
   canUndo: boolean;
   sources: { name: string; count: number }[];
   sections: (DigestSection & { stories: EditionStory[] })[];
+  reaction?: { mood: "keep" | "skip"; n: number } | null;
+  crocProp?: CrocProp;
+  streak?: number;
 }) {
   const [, navigate] = useLocation();
   const current = queue[0];
@@ -257,7 +264,10 @@ export function PhoneDeck({
               </div>
             </article>
           </div>
-          <p className="text-center t-caption">Swipe right to keep, left to skip · tap to read</p>
+          <div className="flex items-center justify-center gap-2">
+            <Croc key={reaction?.n ?? 0} mood={reaction?.mood ?? "idle"} prop={crocProp} className="w-12 shrink-0" />
+            <p className="t-caption">Swipe right to keep, left to skip · tap to read</p>
+          </div>
           <div className="flex items-center justify-center gap-5 mt-3 mb-4">
             <button onClick={onUndo} disabled={!canUndo || !!leaving} aria-label="Undo" className="h-11 w-11 rounded-full grid place-items-center text-ink-2 bg-paper-raised disabled:opacity-30">
               <Undo2 className="h-4 w-4" strokeWidth={1.75} />
@@ -277,11 +287,13 @@ export function PhoneDeck({
           </div>
         </>
       ) : (
-        <div className="flex-1 rounded-[20px] bg-sage-soft p-6 flex flex-col justify-center mb-4 animate-in fade-in zoom-in-95">
-          <div className="h-12 w-12 rounded-full bg-sage text-sage-ink grid place-items-center"><Check className="h-6 w-6" /></div>
+        <div className="relative flex-1 rounded-[20px] bg-sage-soft p-6 flex flex-col justify-center mb-4 animate-in fade-in zoom-in-95">
+          <Confetti />
+          <Croc mood={streak >= 7 ? "proud" : "done"} tail label="The croc hops: all sorted" className="w-28" />
           <p className="t-h1 text-ink mt-5">All {stories.length} sorted</p>
           <p className="font-serif text-[17px] leading-[28px] text-ink-2 mt-2">
             {kept.length} {kept.length === 1 ? "story is" : "stories are"} waiting in your reading list.
+            {streak >= 7 && ` That’s ${streak} days in a row.`}
           </p>
           {kept[0] && (
             <Link href={storyHref(digestId, kept[0])}>

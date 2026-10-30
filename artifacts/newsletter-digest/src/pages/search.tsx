@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Croc } from "@/components/press/croc";
 import { useSearchDigests, getSearchDigestsQueryKey } from "@workspace/api-client-react";
 import { Input } from "@/components/ui/input";
 import { Search as SearchIcon, ExternalLink, ArrowRight } from "lucide-react";
@@ -57,6 +58,13 @@ export default function Search() {
         </button>
       </form>
 
+      {!activeQuery && (
+        <div className="text-center py-10">
+          <Croc mood="curious" className="mx-auto w-32" />
+          <p className="font-serif text-[17px] text-ink-2 mt-4">Type a word to search every past edition.</p>
+        </div>
+      )}
+
       {/* Results */}
       {activeQuery && (
         <div>
@@ -90,7 +98,7 @@ export default function Search() {
                       </span>
                     </Link>
                     <span className="text-[10px] font-sans font-bold uppercase tracking-wider text-muted-foreground border border-border bg-card px-2 py-0.5">
-                      {(story.relevanceScore * 100).toFixed(0)}% relevant
+                      {Math.round(story.relevanceScore)}% relevant
                     </span>
                   </div>
 
@@ -121,6 +129,7 @@ export default function Search() {
             </div>
           ) : (
             <div className="text-center py-16 border border-dashed border-border bg-card">
+              <Croc mood="curious" className="mx-auto w-28 mb-4" />
               <p
                 className="text-xl italic text-muted-foreground"
                

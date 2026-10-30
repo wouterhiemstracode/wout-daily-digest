@@ -13,6 +13,7 @@ import Search from "@/pages/search";
 import NotFound from "@/pages/not-found";
 import SignIn from "@/pages/sign-in";
 import Privacy from "@/pages/privacy";
+import PeekSheet from "@/pages/peek";
 
 const signedOut = (err: unknown) => err instanceof ApiError && err.status === 401;
 
@@ -24,7 +25,8 @@ const queryClient: QueryClient = new QueryClient({
       if (signedOut(err) && !isSessionCheck) queryClient.invalidateQueries({ queryKey: getGetSessionQueryKey() });
     },
   }),
-  defaultOptions: { queries: { retry: (count, err) => !signedOut(err) && count < 2 } },
+  // Retry only what might work a second later (network trouble, server errors), never a 401 or 404.
+  defaultOptions: { queries: { retry: (count, err) => !(err instanceof ApiError && err.status < 500) && count < 2 } },
 });
 
 /** Everything except the sign-in screen needs a Google sign-in. */
@@ -61,6 +63,7 @@ function App() {
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <Switch>
             <Route path="/privacy" component={Privacy} />
+            <Route path="/peek" component={PeekSheet} />
             <Route>
               <SessionGate>
                 <Router />

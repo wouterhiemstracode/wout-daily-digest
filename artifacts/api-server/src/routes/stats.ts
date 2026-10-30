@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, digestsTable, storiesTable, sendersTable, emailsTable, digestSectionsTable } from "@workspace/db";
-import { eq, sql, count, max } from "@workspace/db";
+import { db, digestsTable, storiesTable, sendersTable, emailsTable, feedbackTable, eq, sql, count, gte, inArray } from "@workspace/db";
+import { localDay, streakDays } from "../lib/streak";
 
 const router = Router();
 
@@ -23,7 +23,17 @@ router.get("/", async (req, res) => {
     .orderBy(sql`${emailsTable.receivedAt} desc`)
     .limit(1);
 
+  const since = new Date(Date.now() - 400 * 24 * 60 * 60 * 1000);
+  const rated = await db
+    .select({ at: feedbackTable.createdAt })
+    .from(feedbackTable)
+    .where(sql`${inArray(feedbackTable.rating, ["up", "down"])} and ${gte(feedbackTable.createdAt, since)}`);
+
   res.json({
+    streakDays: streakDays(
+      rated.map((r) => localDay(r.at)),
+      localDay(new Date()),
+    ),
     totalDigests: digestCount?.count ?? 0,
     totalStories: storyCount?.count ?? 0,
     totalSenders: senderCount?.count ?? 0,
