@@ -149,6 +149,8 @@ router.post("/generate", async (req, res) => {
           summary: story.summary,
           whyItMatters: story.whyItMatters,
           takeaways: story.takeaways ?? [],
+          body: story.body,
+          pullQuote: story.pullQuote,
           sourceUrl: story.sourceUrl,
           sourceName: story.sourceName,
           relevanceScore: story.relevanceScore,
@@ -208,6 +210,8 @@ async function buildFullDigest(digestId: number) {
           relevanceScore: s.relevanceScore,
           sortOrder: s.sortOrder,
           userFeedback: s.userFeedback,
+          body: (s.body as string[]) ?? [],
+          pullQuote: s.pullQuote,
         })),
       };
     })

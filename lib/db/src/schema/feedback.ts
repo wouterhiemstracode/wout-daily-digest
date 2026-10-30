@@ -6,7 +6,7 @@ import { storiesTable } from "./digests";
 export const feedbackTable = pgTable("feedback", {
   id: serial("id").primaryKey(),
   storyId: integer("story_id").notNull().references(() => storiesTable.id, { onDelete: "cascade" }),
-  rating: text("rating").notNull(), // up | down
+  rating: text("rating").notNull(), // up | down | none
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

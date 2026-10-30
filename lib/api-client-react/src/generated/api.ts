@@ -35,6 +35,7 @@ import type {
   SearchResults,
   Sender,
   SenderInput,
+  SenderUpdate,
   Stats,
   SuccessResponse,
   SyncResult
@@ -505,6 +506,78 @@ export const useCreateSender = <TError = ErrorType<unknown>,
       return useMutation(getCreateSenderMutationOptions(options));
     }
 
+export const getUpdateSenderUrl = (id: number,) => {
+
+
+
+
+  return `/api/senders/${id}`
+}
+
+/**
+ * @summary Turn a newsletter sender on or off
+ */
+export const updateSender = async (id: number,
+    senderUpdate: SenderUpdate, options?: RequestInit): Promise<Sender> => {
+
+  return customFetch<Sender>(getUpdateSenderUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      senderUpdate,)
+  }
+);}
+
+
+
+
+export const getUpdateSenderMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSender>>, TError,{id: number;data: BodyType<SenderUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSender>>, TError,{id: number;data: BodyType<SenderUpdate>}, TContext> => {
+
+const mutationKey = ['updateSender'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSender>>, {id: number;data: BodyType<SenderUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateSender(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateSenderMutationResult = NonNullable<Awaited<ReturnType<typeof updateSender>>>
+    export type UpdateSenderMutationBody = BodyType<SenderUpdate>
+    export type UpdateSenderMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Turn a newsletter sender on or off
+ */
+export const useUpdateSender = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSender>>, TError,{id: number;data: BodyType<SenderUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateSender>>,
+        TError,
+        {id: number;data: BodyType<SenderUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateSenderMutationOptions(options));
+    }
+
 export const getDeleteSenderUrl = (id: number,) => {
 
 
@@ -584,8 +657,8 @@ export const getSyncEmailsUrl = () => {
 }
 
 /**
- * Fetches emails from the last 24 hours for all tracked senders
- * @summary Fetch latest emails from Gmail
+ * Scans the last 24 hours of the connected inbox, adds any newsletter senders it finds (mailing-list mail that isn't a receipt or account notice), and stores the newsletters from every sender that is switched on.
+ * @summary Fetch latest newsletters from Gmail
  */
 export const syncEmails = async ( options?: RequestInit): Promise<SyncResult> => {
 
@@ -633,7 +706,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type SyncEmailsMutationError = ErrorType<unknown>
 
     /**
- * @summary Fetch latest emails from Gmail
+ * @summary Fetch latest newsletters from Gmail
  */
 export const useSyncEmails = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof syncEmails>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
