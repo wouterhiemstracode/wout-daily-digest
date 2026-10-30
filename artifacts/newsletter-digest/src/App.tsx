@@ -12,6 +12,7 @@ import Senders from "@/pages/senders";
 import Search from "@/pages/search";
 import NotFound from "@/pages/not-found";
 import SignIn from "@/pages/sign-in";
+import Privacy from "@/pages/privacy";
 
 const signedOut = (err: unknown) => err instanceof ApiError && err.status === 401;
 
@@ -58,9 +59,14 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <SessionGate>
-            <Router />
-          </SessionGate>
+          <Switch>
+            <Route path="/privacy" component={Privacy} />
+            <Route>
+              <SessionGate>
+                <Router />
+              </SessionGate>
+            </Route>
+          </Switch>
         </WouterRouter>
         <Toaster />
       </TooltipProvider>
