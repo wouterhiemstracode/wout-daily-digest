@@ -10,7 +10,12 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+if (!/^postgres(ql)?:\/\//.test(process.env.DATABASE_URL)) {
+  throw new Error("DATABASE_URL must start with postgresql:// (copy only the connection string, without psql or quotes)");
+}
+
+// Fail within seconds when the database can't be reached, instead of waiting forever.
+export const pool = new Pool({ connectionString: process.env.DATABASE_URL, connectionTimeoutMillis: 10_000 });
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";

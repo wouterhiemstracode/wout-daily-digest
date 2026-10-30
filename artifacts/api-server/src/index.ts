@@ -24,7 +24,13 @@ if (Number.isNaN(port) || port <= 0) {
 // Production applies pending migrations before taking traffic; local development uses `db push`.
 if (process.env["NODE_ENV"] === "production") {
   const folder = process.env["MIGRATIONS_DIR"] ?? path.resolve(import.meta.dirname, "../../../lib/db/migrations");
-  await migrateDatabase(folder);
+  logger.info("Preparing the database");
+  try {
+    await migrateDatabase(folder);
+  } catch (err: any) {
+    logger.error({ err }, `Can't prepare the database: ${err?.cause?.message ?? err?.message ?? err}. Check DATABASE_URL.`);
+    process.exit(1);
+  }
   logger.info({ folder }, "Database up to date");
 }
 
