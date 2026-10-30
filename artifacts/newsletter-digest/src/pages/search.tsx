@@ -28,7 +28,7 @@ export default function Search() {
       <div className="border-t-[3px] border-b border-double border-foreground pt-3 pb-6 mb-8">
         <h1
           className="text-4xl font-black text-primary uppercase tracking-tight mt-3"
-          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+         
         >
           Search the Archive
         </h1>
@@ -73,7 +73,7 @@ export default function Search() {
             <div className="text-center py-14">
               <p
                 className="text-xl italic text-muted-foreground"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+               
               >
                 Searching the archive…
               </p>
@@ -96,7 +96,7 @@ export default function Search() {
 
                   <h3
                     className="text-xl font-bold leading-tight text-foreground mt-2 mb-3"
-                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                   
                   >
                     {story.headline}
                   </h3>
@@ -123,7 +123,7 @@ export default function Search() {
             <div className="text-center py-16 border border-dashed border-border bg-card">
               <p
                 className="text-xl italic text-muted-foreground"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+               
               >
                 Nothing found for "{activeQuery}".
               </p>

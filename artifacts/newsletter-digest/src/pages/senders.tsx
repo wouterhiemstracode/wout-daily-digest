@@ -50,7 +50,7 @@ export default function Senders() {
       <div className="border-t-[3px] border-b border-double border-foreground pt-3 pb-6 mb-8">
         <h1
           className="text-4xl font-black text-primary uppercase tracking-tight mt-3"
-          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+         
         >
           My Sources
         </h1>
@@ -63,7 +63,7 @@ export default function Senders() {
       <div className="bg-card border border-border p-6 mb-8">
         <h2
           className="text-lg font-bold text-foreground mb-4"
-          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+         
         >
           Add a Newsletter Source
         </h2>
@@ -124,7 +124,7 @@ export default function Senders() {
                     <Mail className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-bold text-sm text-foreground truncate" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                    <h3 className="font-bold text-sm text-foreground truncate">
                       {sender.name || sender.email}
                     </h3>
                     <div className="flex items-center gap-2 font-sans text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">
@@ -153,7 +153,7 @@ export default function Senders() {
           <div className="text-center py-14 border border-dashed border-border bg-card">
             <p
               className="text-xl italic text-muted-foreground mb-2"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+             
             >
               No sources yet — it's quiet in here.
             </p>

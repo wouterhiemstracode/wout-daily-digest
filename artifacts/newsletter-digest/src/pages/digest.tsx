@@ -43,7 +43,7 @@ export default function DigestView() {
   if (!digest) {
     return (
       <div className="text-center py-16 text-muted-foreground font-sans">
-        <p className="text-2xl italic mb-2" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+        <p className="text-2xl italic mb-2">
           This edition couldn't be found.
         </p>
         <Link href="/archive">
@@ -80,8 +80,7 @@ export default function DigestView() {
             <img src="/wout-reading.png" alt="Wout reading the digest" className="w-full object-cover mix-blend-multiply" />
           </div>
           <div className="flex-1 text-center sm:text-left">
-            <h1 className="text-3xl sm:text-4xl font-black text-primary uppercase tracking-tight leading-tight mb-2"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+            <h1 className="text-3xl sm:text-4xl font-black text-primary uppercase tracking-tight leading-tight mb-2">
               Wout's Daily Digest
             </h1>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 font-sans text-[11px] uppercase tracking-widest text-muted-foreground border-t border-border pt-2 mb-3">
@@ -93,7 +92,6 @@ export default function DigestView() {
             {digest.intro && (
               <p
                 className="text-base italic text-foreground/75 leading-relaxed"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
               >
                 {digest.intro}
               </p>
@@ -121,7 +119,6 @@ export default function DigestView() {
             </p>
             <h3
               className="text-xl sm:text-2xl font-bold text-primary leading-snug mb-3"
-              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
             >
               {howIAIStory.headline}
             </h3>
@@ -144,7 +141,7 @@ export default function DigestView() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => feedbackMutation.mutate({ data: { storyId: howIAIStory.id, rating: 'up' } })}
-                  className={`p-1.5 transition-colors rounded ${howIAIStory.userFeedback === 'up' ? 'text-green-700 bg-green-50' : 'text-muted-foreground hover:text-green-700'}`}
+                  className={`p-1.5 transition-colors rounded ${howIAIStory.userFeedback === 'up' ? 'text-sage bg-sage-soft' : 'text-muted-foreground hover:text-sage'}`}
                 >
                   <ThumbsUp className="h-3.5 w-3.5" />
                 </button>
@@ -193,7 +190,6 @@ export default function DigestView() {
                   <div className="flex items-center gap-2 mb-2">
                     <span
                       className="text-3xl font-black text-border leading-none"
-                      style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                     >
                       {i + 1}
                     </span>
@@ -207,7 +203,6 @@ export default function DigestView() {
                   {/* Headline */}
                   <h3
                     className="text-xl sm:text-2xl font-bold leading-tight text-foreground mb-2"
-                    style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                   >
                     {story.headline}
                   </h3>
@@ -234,7 +229,7 @@ export default function DigestView() {
                     <div className="flex items-center gap-0.5">
                       <button
                         onClick={() => feedbackMutation.mutate({ data: { storyId: story.id, rating: 'up' } })}
-                        className={`p-1.5 transition-colors rounded ${story.userFeedback === 'up' ? 'text-green-700 bg-green-50' : 'text-muted-foreground hover:text-green-700'}`}
+                        className={`p-1.5 transition-colors rounded ${story.userFeedback === 'up' ? 'text-sage bg-sage-soft' : 'text-muted-foreground hover:text-sage'}`}
                         aria-label="Good story"
                       >
                         <ThumbsUp className="h-3.5 w-3.5" />
@@ -294,14 +289,13 @@ export default function DigestView() {
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <h4
                             className="text-[15px] font-bold leading-snug text-foreground"
-                            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                           >
                             {story.headline}
                           </h4>
                           <div className="flex items-center gap-0.5 shrink-0">
                             <button
                               onClick={() => feedbackMutation.mutate({ data: { storyId: story.id, rating: 'up' } })}
-                              className={`p-1 transition-colors rounded ${story.userFeedback === 'up' ? 'text-green-700' : 'text-muted-foreground/50 hover:text-green-700'}`}
+                              className={`p-1 transition-colors rounded ${story.userFeedback === 'up' ? 'text-sage' : 'text-muted-foreground/50 hover:text-sage'}`}
                             >
                               <ThumbsUp className="h-3 w-3" />
                             </button>
@@ -361,8 +355,7 @@ export default function DigestView() {
                 <p className="text-[11px] font-sans font-bold uppercase tracking-widest text-primary/60 mb-1">
                   {job.sourceName ?? "Newsletter"}
                 </p>
-                <p className="text-sm font-semibold text-primary leading-snug mb-2"
-                  style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                <p className="text-sm font-semibold text-primary leading-snug mb-2">
                   {job.headline}
                 </p>
                 <p className="text-[12px] leading-relaxed text-foreground/65 mb-3">{job.summary}</p>
@@ -370,7 +363,7 @@ export default function DigestView() {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => feedbackMutation.mutate({ data: { storyId: job.id, rating: 'up' } })}
-                      className={`p-1 transition-colors ${job.userFeedback === 'up' ? 'text-green-700' : 'text-muted-foreground hover:text-green-700'}`}
+                      className={`p-1 transition-colors ${job.userFeedback === 'up' ? 'text-sage' : 'text-muted-foreground hover:text-sage'}`}
                     >
                       <ThumbsUp className="h-3 w-3" />
                     </button>
@@ -396,7 +389,7 @@ export default function DigestView() {
 
       {/* Footer */}
       <div className="mt-12 pt-6 border-t-[3px] border-double border-foreground text-center">
-        <p className="text-sm italic text-muted-foreground" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+        <p className="text-sm italic text-muted-foreground">
           End of edition · Wout's Daily Digest
         </p>
       </div>

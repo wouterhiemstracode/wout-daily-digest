@@ -2,7 +2,7 @@ import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Layout } from "@/components/layout";
+import { PressLayout } from "@/components/press/press-layout";
 import Dashboard from "@/pages/dashboard";
 import DigestView from "@/pages/digest";
 import Archive from "@/pages/archive";
@@ -14,7 +14,7 @@ const queryClient = new QueryClient();
 
 function Router() {
   return (
-    <Layout>
+    <PressLayout padded>
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/digest/:id" component={DigestView} />
@@ -23,7 +23,7 @@ function Router() {
         <Route path="/search" component={Search} />
         <Route component={NotFound} />
       </Switch>
-    </Layout>
+    </PressLayout>
   );
 }
 
