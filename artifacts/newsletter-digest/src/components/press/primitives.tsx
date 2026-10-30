@@ -39,15 +39,6 @@ export function Kicker({ children, colour, tint, className }: { children: React.
   );
 }
 
-export function Tag({ children, colour, className }: { children: React.ReactNode; colour?: string; className?: string }) {
-  return (
-    <span className={cn("inline-flex items-center gap-2 t-tag text-ink-2", className)}>
-      <span className="h-2 w-2 rounded-full shrink-0" style={{ background: colour ?? "var(--ink-3)" }} />
-      {children}
-    </span>
-  );
-}
-
 /* ── Section header ─────────────────────────────────────── */
 export function SectionHeader({
   title,

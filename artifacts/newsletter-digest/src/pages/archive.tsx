@@ -58,7 +58,7 @@ export default function Archive() {
             The archive is empty — no editions yet.
           </p>
           <p className="text-sm font-sans text-muted-foreground">
-            Head to the dashboard to generate your first briefing.
+            Head to Today to write your first briefing.
           </p>
         </div>
       )}
