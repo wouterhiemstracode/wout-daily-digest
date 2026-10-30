@@ -65,7 +65,7 @@ if [ -z "$PROJECT" ]; then
 fi
 PROJECT_NUMBER="$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')"
 # Cloud Run's address is known before the first deploy, so sign-in works straight away.
-APP_URL="https://${SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"
+export APP_URL="https://${SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"
 
 echo "→ Project $PROJECT, region $REGION, app $APP_URL"
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com cloudscheduler.googleapis.com --quiet
@@ -87,7 +87,6 @@ with open(sys.argv[1], "w") as f:
         if os.environ.get(n):
             f.write(f"{n}: {json.dumps(os.environ[n])}\n")
 PY
-export APP_URL
 
 echo "→ Building and deploying (takes a few minutes the first time)"
 gcloud run deploy "$SERVICE" \
