@@ -2,7 +2,7 @@ import { Check, X, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DecisionButton } from "./primitives";
 import { SectionKicker, SourceAvatar } from "./stories";
-import { readMinutes, type EditionStory } from "@/lib/press";
+import { matchLabel, readMinutes, type EditionStory } from "@/lib/press";
 
 /**
  * The sorting card: one story at a time, kept (tick) or skipped (cross).
@@ -53,7 +53,7 @@ export function SortCard({
         <div key={story.id} className="px-8 pt-8 pb-6 flex-1 animate-in fade-in slide-in-from-right-2 duration-300">
           <div className="flex items-center gap-3">
             <SectionKicker story={story} />
-            <span className="t-caption">{Math.round(story.relevanceScore * 100)}% match</span>
+            <span className="t-caption">{matchLabel(story)}</span>
           </div>
           <h3 className="t-h1 mt-5 text-ink max-w-[24ch]">{story.headline}</h3>
           <p className="t-standfirst mt-4 max-w-[58ch]">{story.summary}</p>

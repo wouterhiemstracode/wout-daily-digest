@@ -4,7 +4,7 @@ import { ArrowRight, ArrowUpRight, Bookmark, Check, Clock, Undo2, X } from "luci
 import type { DigestSection } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
 import { SectionKicker, SourceAvatar } from "./stories";
-import { greeting, readMinutes, sectionColour, sectionTint, storyHref, type EditionStory } from "@/lib/press";
+import { greeting, matchLabel, readMinutes, sectionColour, sectionTint, storyHref, type EditionStory } from "@/lib/press";
 
 type Sheet = "next" | "list" | "sources" | "sections";
 const TABS: [Sheet, string][] = [["next", "Up next"], ["list", "Reading list"], ["sources", "Sources"], ["sections", "Sections"]];
@@ -244,7 +244,7 @@ export function PhoneDeck({
               <span className="absolute -top-3 left-6 rounded-xl border-2 border-ink-3 text-ink-2 bg-paper-raised px-2.5 py-0.5 font-sans text-[15px] font-semibold -rotate-12 pointer-events-none" style={{ opacity: Math.max(0, -lean) }}>Skip</span>
               <div className="flex items-center justify-between gap-2">
                 <SectionKicker story={current} />
-                <span className="t-caption">{Math.round(current.relevanceScore * 100)}% match</span>
+                <span className="t-caption">{matchLabel(current)}</span>
               </div>
               <h2 className="font-sans font-semibold text-[26px] leading-[32px] tracking-[-0.025em] text-ink mt-4" style={{ textWrap: "balance" } as React.CSSProperties}>{current.headline}</h2>
               <p className="font-serif text-[16px] leading-[26px] text-ink-2 mt-3 line-clamp-5">{current.whyItMatters}</p>

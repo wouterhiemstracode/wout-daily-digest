@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSearchDigests } from "@workspace/api-client-react";
+import { useSearchDigests, getSearchDigestsQueryKey } from "@workspace/api-client-react";
 import { Input } from "@/components/ui/input";
 import { Search as SearchIcon, ExternalLink, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
@@ -11,7 +11,7 @@ export default function Search() {
 
   const { data: searchResults, isLoading } = useSearchDigests(
     { q: activeQuery },
-    { query: { enabled: activeQuery.length > 2 } }
+    { query: { enabled: activeQuery.length > 2, queryKey: getSearchDigestsQueryKey({ q: activeQuery }) } }
   );
 
   const handleSearch = (e: React.FormEvent) => {

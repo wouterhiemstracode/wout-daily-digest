@@ -23,11 +23,7 @@ import { flattenStories, greeting, storyHref, uniqueStories, type EditionStory }
 
 type Decision = "up" | "down";
 
-/**
- * The sorting desk: one story at a time, kept or skipped.
- * Each decision is sent as story feedback; undo is local only, because the
- * feedback API has no way to clear a rating yet.
- */
+/** The sorting desk: one story at a time, kept or skipped. Every decision and undo is sent as story feedback. */
 function useSortDesk(digestId: number | undefined, stories: EditionStory[]) {
   const [decisions, setDecisions] = React.useState<Record<number, Decision>>({});
   const [history, setHistory] = React.useState<number[]>([]);
@@ -64,7 +60,8 @@ function useSortDesk(digestId: number | undefined, stories: EditionStory[]) {
       delete next[last];
       return next;
     });
-  }, [history]);
+    feedback.mutate({ data: { storyId: last, rating: "none" } });
+  }, [history, feedback]);
 
   return { queue, current, kept, skipped, decisions, decide, undo, canUndo: history.length > 0 };
 }

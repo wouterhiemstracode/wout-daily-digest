@@ -40,11 +40,8 @@ export function contrast(a: string, b: string) {
   return (x + 0.05) / (y + 0.05);
 }
 
-/**
- * A story with its section attached. `body` and `pullQuote` are not sent by the API yet;
- * the reading view uses them when present and falls back to the briefing text otherwise.
- */
-export type EditionStory = Story & { sectionType: string; sectionTitle: string; body?: string[]; pullQuote?: string };
+/** A story with its section attached. */
+export type EditionStory = Story & { sectionType: string; sectionTitle: string };
 
 export function flattenStories(sections: DigestSection[] | undefined): EditionStory[] {
   return (sections ?? []).flatMap((s) =>
@@ -52,7 +49,10 @@ export function flattenStories(sections: DigestSection[] | undefined): EditionSt
   );
 }
 
-/** Today's queue: every story once, even when it appears in Top Stories and its own section. */
+/**
+ * Today's queue: every story once. Digests written before the backend stopped repeating
+ * Top Stories in their own section still contain duplicates.
+ */
 export function uniqueStories(stories: EditionStory[]) {
   const seen = new Set<string>();
   return stories.filter((s) => {
@@ -64,9 +64,14 @@ export function uniqueStories(stories: EditionStory[]) {
 }
 
 export function readMinutes(story: EditionStory) {
-  const text = [...(story.body ?? [story.summary, story.whyItMatters]), ...(story.takeaways ?? [])];
+  const text = [...(story.body?.length ? story.body : [story.summary, story.whyItMatters]), ...(story.takeaways ?? [])];
   const words = text.join(" ").split(/\s+/).length;
   return Math.max(1, Math.round(words / 230) + 1);
+}
+
+/** relevanceScore is 1–100. */
+export function matchLabel(story: Story) {
+  return `${Math.round(story.relevanceScore)}% match`;
 }
 
 export function greeting(date = new Date()) {

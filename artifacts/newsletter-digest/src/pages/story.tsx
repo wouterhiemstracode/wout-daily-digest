@@ -63,7 +63,7 @@ export default function StoryPage() {
     );
   }
 
-  // The full story text isn't sent by the API yet; until it is, the briefing is the story.
+  // Digests written before full text existed have no body; the briefing fields carry them.
   const [lead, ...rest] = story.body ?? [];
   const quoteAfter = Math.min(2, rest.length - 1);
   const date = format(new Date(digest.date + "T12:00:00"), "EEEE d MMMM yyyy");
