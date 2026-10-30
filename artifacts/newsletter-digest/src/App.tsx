@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PressLayout } from "@/components/press/press-layout";
 import Today from "@/pages/today";
+import StoryPage from "@/pages/story";
 import DigestView from "@/pages/digest";
 import Archive from "@/pages/archive";
 import Senders from "@/pages/senders";
@@ -21,6 +22,7 @@ function Router() {
     <PressLayout padded={!EDITION_ROUTES.some((r) => r.test(location))}>
       <Switch>
         <Route path="/" component={Today} />
+        <Route path="/story/:digestId/:storyId" component={StoryPage} />
         <Route path="/digest/:id" component={DigestView} />
         <Route path="/archive" component={Archive} />
         <Route path="/senders" component={Senders} />
