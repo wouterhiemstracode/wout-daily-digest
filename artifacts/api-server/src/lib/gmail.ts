@@ -1,40 +1,17 @@
-import { ReplitConnectors } from "@replit/connectors-sdk";
-import { db } from "@workspace/db";
-import { gmailTokensTable } from "@workspace/db";
 import { logger } from "./logger";
-
-// Gmail connector via Replit's managed OAuth proxy
-// Handles token refresh and auth headers automatically
-
-function getConnectors() {
-  return new ReplitConnectors();
-}
+import { clearGmailTokens, gmailFetch, gmailStatus } from "./google";
 
 export async function getGmailStatus(): Promise<{ connected: boolean; email: string | null }> {
-  try {
-    const connectors = getConnectors();
-    const response = await connectors.proxy("google-mail", "/gmail/v1/users/me/profile", {
-      method: "GET",
-    });
-    if (!response.ok) return { connected: false, email: null };
-    const data = (await response.json()) as { emailAddress?: string };
-    return { connected: true, email: data.emailAddress ?? null };
-  } catch {
-    return { connected: false, email: null };
-  }
+  return gmailStatus();
 }
 
+/** Sign-in and Gmail access are one Google consent screen. */
 export function getAuthUrl(): string {
-  // With Replit connectors, auth is managed by the platform
-  // Return a placeholder URL that the frontend can use to trigger reconnect
-  const domains = process.env["REPLIT_DOMAINS"]?.split(",")[0];
-  return domains ? `https://${domains}` : "http://localhost:80";
+  return "/api/auth/google/start";
 }
 
 export async function disconnectGmail(): Promise<void> {
-  // With Replit connectors, disconnection is managed in the Replit UI
-  // We just clear any local token records
-  await db.delete(gmailTokensTable);
+  await clearGmailTokens();
 }
 
 export interface GmailMessage {
@@ -78,14 +55,11 @@ export function isNewsletter(headers: Header[]): boolean {
 }
 
 async function listMessageIds(query: string, max: number): Promise<string[]> {
-  const connectors = getConnectors();
   const ids: string[] = [];
   let pageToken: string | undefined;
   do {
     const page = pageToken ? `&pageToken=${pageToken}` : "";
-    const res = await connectors.proxy(
-      "google-mail",
-      `/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=100${page}`,
+    const res = await gmailFetch(`/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=100${page}`,
       { method: "GET" }
     );
     if (!res.ok) throw new Error(`Gmail list failed: ${res.status} ${await res.text()}`);
@@ -120,12 +94,11 @@ export interface NewsletterRef {
 export async function discoverNewsletters(hoursBack = 24, max = 300): Promise<NewsletterRef[]> {
   const after = Math.floor((Date.now() - hoursBack * 60 * 60 * 1000) / 1000);
   const ids = await listMessageIds(`after:${after} -in:sent -in:chats -in:spam -in:trash`, max);
-  const connectors = getConnectors();
   const wanted = ["From", "Subject", "List-Unsubscribe", "List-Id", "Precedence"].map((h) => `metadataHeaders=${h}`).join("&");
 
   const refs = await mapLimit(ids, 8, async (id) => {
     try {
-      const res = await connectors.proxy("google-mail", `/gmail/v1/users/me/messages/${id}?format=metadata&${wanted}`, { method: "GET" });
+      const res = await gmailFetch(`/gmail/v1/users/me/messages/${id}?format=metadata&${wanted}`, { method: "GET" });
       if (!res.ok) return null;
       const data = (await res.json()) as { payload?: { headers?: Header[] } };
       const headers = data.payload?.headers ?? [];
@@ -142,7 +115,7 @@ export async function discoverNewsletters(hoursBack = 24, max = 300): Promise<Ne
 /** Fetch one message with its body. */
 export async function fetchMessage(id: string): Promise<GmailMessage | null> {
   try {
-    const res = await getConnectors().proxy("google-mail", `/gmail/v1/users/me/messages/${id}?format=full`, { method: "GET" });
+    const res = await gmailFetch(`/gmail/v1/users/me/messages/${id}?format=full`, { method: "GET" });
     if (!res.ok) return null;
     const data = (await res.json()) as { payload?: { headers?: Header[]; parts?: any[]; body?: { data?: string }; mimeType?: string } };
     const headers = data.payload?.headers ?? [];

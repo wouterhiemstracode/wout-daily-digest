@@ -1,83 +1,20 @@
 import { Router } from "express";
-import { db, emailsTable, sendersTable } from "@workspace/db";
-import { eq, desc, inArray } from "drizzle-orm";
-import { discoverNewsletters, fetchEmailsForSender, fetchMessage, getGmailStatus, type GmailMessage, type NewsletterRef } from "../lib/gmail";
+import { db, emailsTable, sendersTable, eq, desc } from "@workspace/db";
+import { GmailNotConnectedError, syncNewsletters } from "../lib/briefing";
 import { ListEmailsQueryParams } from "@workspace/api-zod";
 
 const router = Router();
 
 router.post("/sync", async (req, res) => {
-  const status = await getGmailStatus();
-  if (!status.connected) {
-    res.status(400).json({ error: "Gmail not connected" });
-    return;
-  }
-
-  const errors: string[] = [];
-
-  // 1. Find newsletters in the inbox and add any sender we haven't seen yet.
-  let found: NewsletterRef[] = [];
   try {
-    found = await discoverNewsletters(24);
-  } catch (err: any) {
-    req.log.error({ err }, "Newsletter discovery failed");
-    errors.push(`Inbox scan: ${err.message ?? "Unknown error"}`);
-  }
-  const known = new Set((await db.select({ email: sendersTable.email }).from(sendersTable)).map((s) => s.email));
-  const fresh = new Map<string, string | null>();
-  for (const ref of found) if (!known.has(ref.email) && !fresh.has(ref.email)) fresh.set(ref.email, ref.name);
-  if (fresh.size > 0) {
-    await db
-      .insert(sendersTable)
-      .values([...fresh].map(([email, name]) => ({ email, name, autoDetected: true })))
-      .onConflictDoNothing({ target: sendersTable.email });
-  }
-
-  // 2. Store new messages from every sender that is switched on.
-  const active = await db.select().from(sendersTable).where(eq(sendersTable.active, true));
-  const senderByEmail = new Map(active.map((s) => [s.email, s]));
-  const stored = new Set(
-    found.length
-      ? (await db.select({ id: emailsTable.gmailMessageId }).from(emailsTable).where(inArray(emailsTable.gmailMessageId, found.map((f) => f.id)))).map((r) => r.id)
-      : [],
-  );
-
-  let fetched = 0;
-  const save = async (senderId: number, msg: GmailMessage) => {
-    const inserted = await db
-      .insert(emailsTable)
-      .values({
-        senderId,
-        gmailMessageId: msg.id,
-        subject: msg.subject,
-        bodyText: msg.bodyText,
-        bodyHtml: msg.bodyHtml,
-        receivedAt: msg.receivedAt,
-        processed: false,
-      })
-      .onConflictDoNothing({ target: emailsTable.gmailMessageId })
-      .returning({ id: emailsTable.id });
-    fetched += inserted.length;
-  };
-
-  for (const ref of found) {
-    const sender = senderByEmail.get(ref.email);
-    if (!sender || stored.has(ref.id)) continue;
-    const msg = await fetchMessage(ref.id);
-    if (msg) await save(sender.id, msg);
-  }
-
-  // Senders added by hand may not send list mail, so they are fetched by address too.
-  for (const sender of active.filter((s) => !s.autoDetected)) {
-    try {
-      for (const msg of await fetchEmailsForSender(sender.email, 24)) await save(sender.id, msg);
-    } catch (err: any) {
-      req.log.error({ err, sender: sender.email }, "Failed to fetch emails for sender");
-      errors.push(`${sender.email}: ${err.message ?? "Unknown error"}`);
+    res.json(await syncNewsletters(req.log));
+  } catch (err) {
+    if (err instanceof GmailNotConnectedError) {
+      res.status(400).json({ error: err.message });
+      return;
     }
+    throw err;
   }
-
-  res.json({ fetched, senders: active.length, discovered: fresh.size, errors });
 });
 
 router.get("/", async (req, res) => {

@@ -1,19 +1,22 @@
 import { Router } from "express";
 import { db, emailsTable, sendersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq } from "@workspace/db";
 
 const router = Router();
 
 const WEBHOOK_SENDER_EMAIL = "make-webhook@internal";
 
 router.post("/funding", async (req, res) => {
+  // Webhooks skip sign-in, so they only work with a shared secret.
   const secret = process.env.WEBHOOK_SECRET;
-  if (secret) {
-    const provided = (req.headers["x-webhook-secret"] ?? req.query.secret) as string | undefined;
-    if (provided !== secret) {
-      res.status(401).json({ error: "Unauthorized" });
-      return;
-    }
+  if (!secret) {
+    res.status(503).json({ error: "Webhook disabled: set WEBHOOK_SECRET" });
+    return;
+  }
+  const provided = (req.headers["x-webhook-secret"] ?? req.query.secret) as string | undefined;
+  if (provided !== secret) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
   }
 
   const items: any[] = Array.isArray(req.body) ? req.body : [req.body];

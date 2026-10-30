@@ -6,8 +6,13 @@ export default defineConfig({
   test: {
     env: {
       DATABASE_URL: process.env["TEST_DATABASE_URL"] ?? "postgres://localhost:5432/unused",
-      AI_INTEGRATIONS_OPENAI_BASE_URL: "http://openai.invalid",
-      AI_INTEGRATIONS_OPENAI_API_KEY: "test",
+      ANTHROPIC_API_KEY: "test",
+      SESSION_SECRET: "test-secret",
+      ALLOWED_EMAILS: "wout@example.com",
+      APP_URL: "http://localhost:8080",
+      GOOGLE_CLIENT_ID: "test-client",
+      GOOGLE_CLIENT_SECRET: "test-secret",
+      WEBHOOK_SECRET: "hook-secret",
       LOG_LEVEL: "silent",
     },
     fileParallelism: false,

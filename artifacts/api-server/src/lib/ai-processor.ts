@@ -1,4 +1,6 @@
-import { openai } from "@workspace/integrations-openai-ai-server";
+import Anthropic from "@anthropic-ai/sdk";
+import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
+import * as z from "zod/v4";
 import { parse } from "node-html-parser";
 import { logger } from "./logger";
 
@@ -71,6 +73,34 @@ export interface FeedbackContext {
   dislikedTopics: string[];
 }
 
+const MODEL = "claude-opus-5-5";
+// Newsletters are capped one by one, so a long issue can't crowd out the others.
+const MAX_NEWSLETTER_CHARS = 12000;
+
+let client: Anthropic | null = null;
+/** Created on first use; reads ANTHROPIC_API_KEY. */
+function claude() {
+  return (client ??= new Anthropic());
+}
+
+const DigestResponse = z.object({
+  intro: z.string(),
+  stories: z.array(
+    z.object({
+      headline: z.string(),
+      summary: z.string(),
+      whyItMatters: z.string(),
+      takeaways: z.array(z.string()),
+      body: z.array(z.string()),
+      pullQuote: z.string().nullable(),
+      sourceUrl: z.string().nullable(),
+      sourceName: z.string().nullable(),
+      relevanceScore: z.number(),
+      section: z.enum(SECTION_TYPES.filter((t) => t !== "top_stories") as [SectionType, ...SectionType[]]),
+    }),
+  ),
+});
+
 function stripHtml(html: string): string {
   try {
     const root = parse(html);
@@ -95,8 +125,8 @@ export async function processEmailsIntoDigest(
 
   const emailSummaries = emails.map((e, i) => {
     const text = e.bodyText
-      ? truncate(e.bodyText, 3000)
-      : truncate(stripHtml(e.bodyHtml), 3000);
+      ? truncate(e.bodyText, MAX_NEWSLETTER_CHARS)
+      : truncate(stripHtml(e.bodyHtml), MAX_NEWSLETTER_CHARS);
     return `--- NEWSLETTER ${i + 1} ---
 From: ${e.senderEmail}
 Subject: ${e.subject}
@@ -202,52 +232,33 @@ For each story output:
 
 Also generate a short "intro" field: a warm, friendly 1-2 sentence good morning note. Mention roughly how many stories there are and what the main themes are today. Keep it light and human — like a colleague poking their head in before a meeting. Example tone: "Good morning! Busy one today — 9 stories, mostly AI tooling and a couple of interesting funding rounds."
 
-Return ONLY valid JSON:
-{
-  "intro": "string",
-  "stories": [
-    {
-      "headline": "string",
-      "summary": "string",
-      "whyItMatters": "string",
-      "takeaways": ["string", "string"],
-      "body": ["paragraph", "paragraph", "paragraph"],
-      "pullQuote": "string or null",
-      "sourceUrl": "string or null",
-      "sourceName": "string or null",
-      "relevanceScore": number,
-      "section": "how_i_ai|product|engineering|funding_ipos|ai_software|trends|takeaways|watch|links|jobs"
-    }
-  ]
-}`;
+Return the intro and the stories in the requested JSON format.`;
 
   const userPrompt = `Process the following newsletters and extract the highest-signal stories:\n\n${combined}`;
 
-  let stories: ProcessedStory[] = [];
-  let intro = "";
+  const stream = claude().beta.messages.stream({
+    model: MODEL,
+    max_tokens: 64000,
+    // On a refusal, the API re-runs the request on Anthropic's recommended fallback model.
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    output_config: { effort: "medium", format: betaZodOutputFormat(DigestResponse) },
+    system: systemPrompt,
+    messages: [{ role: "user", content: userPrompt }],
+  });
+  const message = await stream.finalMessage();
 
-  try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-5-mini",
-      max_completion_tokens: 24000,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: truncate(userPrompt, 50000) },
-      ],
-      response_format: { type: "json_object" },
-    });
-
-    const content = response.choices[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(content) as { intro?: string; stories?: ProcessedStory[] };
-    intro = parsed.intro ?? "";
-    const sourceText = emailSummaries.join("\n");
-    stories = (parsed.stories ?? []).map((s) => cleanStory(s, sourceText));
-  } catch (err) {
-    logger.error({ err }, "AI processing failed");
-    stories = [];
+  if (message.stop_reason === "refusal") {
+    throw new Error(`The model declined to write this briefing (${message.stop_details?.category ?? "no category"})`);
   }
+  if (message.stop_reason === "max_tokens" || !message.parsed_output) {
+    throw new Error(`The briefing came back incomplete (stop reason: ${message.stop_reason})`);
+  }
+  logger.info({ model: message.model, usage: message.usage }, "Briefing written");
 
-  return buildDigestFromStories(stories, intro);
+  const sourceText = emailSummaries.join("\n");
+  const stories = message.parsed_output.stories.map((st) => cleanStory(st, sourceText));
+  return buildDigestFromStories(stories, message.parsed_output.intro);
 }
 
 /** Normalise one story from the model, and drop a pull quote that isn't really in the newsletter. */

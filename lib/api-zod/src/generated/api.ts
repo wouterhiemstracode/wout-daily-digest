@@ -18,6 +18,23 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
+ * Every other endpoint answers 401 until you sign in with Google at /api/auth/google/start (a browser redirect, not part of this JSON API).
+ * @summary Who is signed in
+ */
+export const GetSessionResponse = zod.object({
+  "email": zod.string()
+})
+
+
+/**
+ * @summary Sign out
+ */
+export const SignOutResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
  * Returns the URL to initiate Gmail OAuth flow
  * @summary Get Gmail OAuth URL
  */
