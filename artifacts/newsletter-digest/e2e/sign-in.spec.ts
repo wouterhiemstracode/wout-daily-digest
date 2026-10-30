@@ -20,3 +20,10 @@ test("signed in: straight to Today", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Good evening, Wout" })).toBeVisible();
 });
+
+test("the privacy page is public (Google's consent screen links to it)", async ({ page }) => {
+  await mockApi(page, { signedIn: false });
+  await page.goto("/privacy");
+  await expect(page.getByRole("heading", { name: "Privacy" })).toBeVisible();
+  await expect(page.getByText("read-only")).toBeVisible();
+});
