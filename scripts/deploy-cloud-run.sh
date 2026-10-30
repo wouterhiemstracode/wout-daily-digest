@@ -70,6 +70,12 @@ APP_URL="https://${SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"
 echo "→ Project $PROJECT, region $REGION, app $APP_URL"
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com cloudscheduler.googleapis.com --quiet
 
+# New projects build with the Compute Engine default service account, which can't
+# build yet: give it the Cloud Run builder role (harmless if it already has it).
+gcloud projects add-iam-policy-binding "$PROJECT" \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+  --role="roles/run.builder" --condition=None --quiet >/dev/null
+
 vars_file="$(mktemp)"
 trap 'rm -f "$vars_file"' EXIT
 python3 - "$vars_file" <<'PY'
