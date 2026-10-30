@@ -14,6 +14,7 @@ import { useBriefing } from "@/hooks/use-briefing";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PhoneDeck } from "@/components/press/phone-deck";
+import { Croc, useNightEdition } from "@/components/press/croc";
 import { PressButton, SectionHeader } from "@/components/press/primitives";
 import { SortCard } from "@/components/press/sort-card";
 import { ReadingListItem, SenderRow, SectionTile } from "@/components/press/stories";
@@ -27,6 +28,8 @@ type Decision = "up" | "down";
  */
 function useSortDesk(digestId: number | undefined, stories: EditionStory[]) {
   const [desk, setDesk] = React.useState<{ decisions: Record<number, Decision>; history: number[] }>({ decisions: {}, history: [] });
+  // What the croc reacts to: the last keep or skip (`n` replays the animation).
+  const [reaction, setReaction] = React.useState<{ mood: "keep" | "skip"; n: number } | null>(null);
   const latest = React.useRef(desk);
   const commit = (next: typeof desk) => {
     latest.current = next;
@@ -53,6 +56,7 @@ function useSortDesk(digestId: number | undefined, stories: EditionStory[]) {
       const next = stories.find((s) => !decisions[s.id]);
       if (!next) return;
       commit({ decisions: { ...decisions, [next.id]: rating }, history: [...history, next.id] });
+      setReaction((r) => ({ mood: rating === "up" ? "keep" : "skip", n: (r?.n ?? 0) + 1 }));
       feedback.mutate({ data: { storyId: next.id, rating } });
     },
     [stories, feedback],
@@ -64,10 +68,11 @@ function useSortDesk(digestId: number | undefined, stories: EditionStory[]) {
     const rest = { ...decisions };
     delete rest[last];
     commit({ decisions: rest, history: history.slice(0, -1) });
+    setReaction(null);
     feedback.mutate({ data: { storyId: last, rating: "none" } });
   }, [feedback]);
 
-  return { queue, current, kept, skipped, decisions, decide, undo, canUndo: history.length > 0 };
+  return { queue, current, kept, skipped, decisions, decide, undo, reaction, canUndo: history.length > 0 };
 }
 
 export default function Today() {
@@ -98,6 +103,7 @@ export default function Today() {
   }, [decide, undo]);
 
   const briefing = useBriefing();
+  const night = useNightEdition();
   const connected = !!authStatus?.connected;
 
   const editionDate = format(digest ? new Date(digest.date + "T12:00:00") : new Date(), "EEEE d MMMM yyyy");
@@ -129,6 +135,7 @@ export default function Today() {
         canUndo={desk.canUndo}
         sources={bySource}
         sections={sectionsForTiles.map((sec) => ({ ...sec, stories: allStories.filter((s) => s.sectionId === sec.id) }))}
+        reaction={desk.reaction}
       />
     );
   }
@@ -162,13 +169,24 @@ export default function Today() {
         </div>
       )}
 
+      {briefing.busy && (
+        <div role="status" className="mb-8 flex items-center gap-5 rounded-[20px] bg-paper-raised px-6 py-4">
+          <Croc mood="reading" className="w-20 shrink-0" />
+          <div>
+            <div className="t-label text-ink">{briefing.checking ? "Checking your Gmail…" : "Reading your newsletters…"}</div>
+            <div className="t-caption">Usually about a minute. Ads and receipts get skipped.</div>
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="grid grid-cols-[minmax(0,1fr)_340px] gap-6">
           <Skeleton className="h-[560px] rounded-[20px]" />
           <Skeleton className="h-[560px] rounded-[20px]" />
         </div>
       ) : !digest || stories.length === 0 ? (
-        <div className="py-24 text-center">
+        <div className="py-20 text-center">
+          <Croc mood={night ? "sleepy" : "hello"} className="mx-auto w-36 mb-6" />
           <div className="t-meta">The press is quiet</div>
           <h2 className="t-h1 mt-3">No briefing yet</h2>
           <p className="t-standfirst mt-3 max-w-[48ch] mx-auto">
@@ -195,6 +213,7 @@ export default function Today() {
               onUndo={undo}
               canUndo={desk.canUndo}
               kept={kept.length}
+              reaction={desk.reaction}
               onStartReading={() => kept[0] && navigate(storyHref(digest.id, kept[0]))}
               className="min-h-[560px] self-start"
             />

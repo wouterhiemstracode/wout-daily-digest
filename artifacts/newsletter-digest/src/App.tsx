@@ -24,7 +24,8 @@ const queryClient: QueryClient = new QueryClient({
       if (signedOut(err) && !isSessionCheck) queryClient.invalidateQueries({ queryKey: getGetSessionQueryKey() });
     },
   }),
-  defaultOptions: { queries: { retry: (count, err) => !signedOut(err) && count < 2 } },
+  // Retry only what might work a second later (network trouble, server errors), never a 401 or 404.
+  defaultOptions: { queries: { retry: (count, err) => !(err instanceof ApiError && err.status < 500) && count < 2 } },
 });
 
 /** Everything except the sign-in screen needs a Google sign-in. */

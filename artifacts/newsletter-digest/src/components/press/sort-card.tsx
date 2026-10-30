@@ -1,6 +1,7 @@
 import { Check, X, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DecisionButton } from "./primitives";
+import { Confetti, Croc } from "./croc";
 import { SectionKicker, SourceAvatar } from "./stories";
 import { matchLabel, readMinutes, type EditionStory } from "@/lib/press";
 
@@ -18,6 +19,7 @@ export function SortCard({
   canUndo,
   kept,
   onStartReading,
+  reaction,
   className,
 }: {
   story: EditionStory | null;
@@ -29,6 +31,8 @@ export function SortCard({
   canUndo: boolean;
   kept?: number;
   onStartReading?: () => void;
+  /** The last keep or skip; a new `n` replays the croc's reaction. */
+  reaction?: { mood: "keep" | "skip"; n: number } | null;
   className?: string;
 }) {
   return (
@@ -38,9 +42,12 @@ export function SortCard({
           <h2 className="font-sans font-semibold text-[20px] leading-7 tracking-[-0.02em] text-ink">Sort today’s {total}</h2>
           <p className="t-caption">Keep what you want to read tonight</p>
         </div>
-        <span className="h-8 px-3 rounded-full bg-paper grid place-items-center font-sans text-[13px] font-medium tabular-nums text-ink-2">
-          {story ? <span>{position} <span className="text-ink-3">/ {total}</span></span> : "Done"}
-        </span>
+        <div className="flex items-center gap-3">
+          {story && <Croc key={reaction?.n ?? 0} mood={reaction?.mood ?? "idle"} className="w-14" />}
+          <span className="h-8 px-3 rounded-full bg-paper grid place-items-center font-sans text-[13px] font-medium tabular-nums text-ink-2">
+            {story ? <span>{position} <span className="text-ink-3">/ {total}</span></span> : "Done"}
+          </span>
+        </div>
       </header>
 
       <div className="flex gap-1 px-8 pt-5" aria-hidden>
@@ -69,8 +76,9 @@ export function SortCard({
           </div>
         </div>
       ) : (
-        <div className="px-8 py-14 flex-1 text-center">
-          <div className="mx-auto h-12 w-12 rounded-full bg-sage-soft text-sage grid place-items-center"><Check className="h-6 w-6" /></div>
+        <div className="relative px-8 py-14 flex-1 text-center">
+          <Confetti />
+          <Croc mood="done" label="The croc hops: all sorted" className="mx-auto w-32" />
           <h3 className="t-h1 mt-5 text-ink">All {total} sorted</h3>
           <p className="t-standfirst mt-2">{kept ?? 0} {kept === 1 ? "story is" : "stories are"} waiting in your reading list.</p>
           {onStartReading && (kept ?? 0) > 0 && (

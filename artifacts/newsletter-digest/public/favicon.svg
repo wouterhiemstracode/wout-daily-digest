@@ -1,3 +1,12 @@
 <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="180" height="180" rx="36" fill="#FF3C00"/>
+  <!-- Peek: two eyes above the water -->
+  <rect width="180" height="180" rx="40" fill="#F4EFE6"/>
+  <path d="M22 112 C22 92 42 85 70 86 L138 90 C160 91 168 99 168 114 L22 114 Z" fill="#3F6B4E"/>
+  <circle cx="64" cy="82" r="19" fill="#3F6B4E"/>
+  <circle cx="104" cy="82" r="19" fill="#3F6B4E"/>
+  <circle cx="64" cy="80" r="12" fill="#FFFFFF"/>
+  <circle cx="104" cy="80" r="12" fill="#FFFFFF"/>
+  <circle cx="66.5" cy="81.5" r="5.8" fill="#2A2925"/>
+  <circle cx="106.5" cy="81.5" r="5.8" fill="#2A2925"/>
+  <path d="M14 114 q14 -8 28 0 t28 0 t28 0 t28 0 t28 0 t28 0" stroke="#3F6B4E" stroke-width="6" stroke-linecap="round" opacity=".55"/>
 </svg>
