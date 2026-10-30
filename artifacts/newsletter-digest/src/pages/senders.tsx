@@ -147,7 +147,23 @@ function SenderItem({ sender, onToggle }: { sender: Sender; onToggle: (active: b
           {sender.emailCount} {sender.emailCount === 1 ? "email" : "emails"} · {sender.autoDetected ? "found in Gmail" : "added by you"}
         </div>
       </div>
+      <KeepRate kept={sender.kept} skipped={sender.skipped} />
       <Switch checked={sender.active} onCheckedChange={onToggle} aria-label={`Include ${label} in my briefing`} />
     </li>
+  );
+}
+
+/** How often you keep this newsletter's stories; the briefing leans on it (see lib/preferences.ts). */
+function KeepRate({ kept, skipped }: { kept: number; skipped: number }) {
+  const total = kept + skipped;
+  if (total === 0) return null;
+  const often = kept / total >= 0.6;
+  return (
+    <span
+      className={cn("shrink-0 h-7 px-2.5 rounded-full grid place-items-center t-tag tabular-nums", often ? "bg-sage-soft text-sec-ai" : "bg-paper text-ink-2")}
+      title={`You kept ${kept} and skipped ${skipped} of its stories in the last 90 days`}
+    >
+      kept {kept} of {total}
+    </span>
   );
 }

@@ -31,6 +31,8 @@ export function demoSenderList(): Sender[] {
     ...s,
     active: i !== 5,
     autoDetected: i !== 4,
+    kept: [8, 2, 1, 0, 0, 0][i]!,
+    skipped: [2, 1, 5, 0, 0, 0][i]!,
     emailCount: 6 - i,
     createdAt: "2026-10-01T08:00:00Z",
   }));

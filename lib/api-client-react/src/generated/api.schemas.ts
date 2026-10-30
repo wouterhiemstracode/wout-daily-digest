@@ -35,6 +35,10 @@ export interface Sender {
   active: boolean;
   /** Found in the inbox by sync rather than added by hand */
   autoDetected: boolean;
+  /** Stories from this newsletter you kept in the last 90 days */
+  kept: number;
+  /** Stories from this newsletter you skipped in the last 90 days */
+  skipped: number;
   emailCount: number;
   createdAt: string;
 }
