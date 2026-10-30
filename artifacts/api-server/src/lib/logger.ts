@@ -10,7 +10,11 @@ export const logger = pino({
     "res.headers['set-cookie']",
   ],
   ...(isProduction
-    ? {}
+    ? {
+        // Google Cloud Logging reads `severity` and `message`, so errors show up as errors.
+        messageKey: "message",
+        formatters: { level: (label: string) => ({ severity: label.toUpperCase() }) },
+      }
     : {
         transport: {
           target: "pino-pretty",
