@@ -8,13 +8,15 @@ const router = Router();
 router.post("/", async (req, res) => {
   const parsed = SubmitFeedbackBody.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: "Invalid input", details: parsed.error.issues });
+    res.status(400).json({ error: "Invalid input", details: parsed.error.issues });
+    return;
   }
 
   const { storyId, rating } = parsed.data;
 
   if (!["up", "down"].includes(rating)) {
-    return res.status(400).json({ error: "Rating must be 'up' or 'down'" });
+    res.status(400).json({ error: "Rating must be 'up' or 'down'" });
+    return;
   }
 
   // Update story's userFeedback field

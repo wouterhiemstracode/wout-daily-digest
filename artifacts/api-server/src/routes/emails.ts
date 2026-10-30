@@ -11,7 +11,8 @@ router.post("/sync", async (req, res) => {
   const { getGmailStatus } = await import("../lib/gmail");
   const status = await getGmailStatus();
   if (!status.connected) {
-    return res.status(400).json({ error: "Gmail not connected" });
+    res.status(400).json({ error: "Gmail not connected" });
+    return;
   }
 
   const senders = await db

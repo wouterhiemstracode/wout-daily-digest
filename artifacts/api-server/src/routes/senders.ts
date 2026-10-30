@@ -2,7 +2,6 @@ import { Router } from "express";
 import { db, sendersTable, emailsTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { CreateSenderBody, DeleteSenderParams } from "@workspace/api-zod";
-import { z } from "zod/v4";
 
 const router = Router();
 
@@ -32,7 +31,8 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   const parsed = CreateSenderBody.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ error: "Invalid input", details: parsed.error.issues });
+    res.status(400).json({ error: "Invalid input", details: parsed.error.issues });
+    return;
   }
 
   const { email, name } = parsed.data;
@@ -56,7 +56,8 @@ router.post("/", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   const parsed = DeleteSenderParams.safeParse({ id: Number(req.params["id"]) });
   if (!parsed.success) {
-    return res.status(400).json({ error: "Invalid ID" });
+    res.status(400).json({ error: "Invalid ID" });
+    return;
   }
 
   await db.delete(sendersTable).where(eq(sendersTable.id, parsed.data.id));

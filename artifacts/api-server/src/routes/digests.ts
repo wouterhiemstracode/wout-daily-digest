@@ -49,7 +49,8 @@ router.get("/latest", async (req, res) => {
     .limit(1);
 
   if (!digest) {
-    return res.status(404).json({ error: "No digest found" });
+    res.status(404).json({ error: "No digest found" });
+    return;
   }
 
   res.json(await buildFullDigest(digest.id));
@@ -58,10 +59,10 @@ router.get("/latest", async (req, res) => {
 // GET /digests/:id
 router.get("/:id", async (req, res) => {
   const parsed = GetDigestParams.safeParse({ id: Number(req.params["id"]) });
-  if (!parsed.success) return res.status(400).json({ error: "Invalid ID" });
+  if (!parsed.success) { res.status(400).json({ error: "Invalid ID" }); return; }
 
   const [digest] = await db.select().from(digestsTable).where(eq(digestsTable.id, parsed.data.id));
-  if (!digest) return res.status(404).json({ error: "Not found" });
+  if (!digest) { res.status(404).json({ error: "Not found" }); return; }
 
   res.json(await buildFullDigest(digest.id));
 });
