@@ -1,5 +1,6 @@
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ApiError, getGetSessionQueryKey, useGetSession } from "@workspace/api-client-react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PressLayout } from "@/components/press/press-layout";
@@ -10,8 +11,27 @@ import Archive from "@/pages/archive";
 import Senders from "@/pages/senders";
 import Search from "@/pages/search";
 import NotFound from "@/pages/not-found";
+import SignIn from "@/pages/sign-in";
 
-const queryClient = new QueryClient();
+const signedOut = (err: unknown) => err instanceof ApiError && err.status === 401;
+
+const queryClient: QueryClient = new QueryClient({
+  // A 401 anywhere means the session ended: re-check it, which shows the sign-in screen.
+  queryCache: new QueryCache({
+    onError: (err, query) => {
+      const isSessionCheck = query.queryKey[0] === getGetSessionQueryKey()[0];
+      if (signedOut(err) && !isSessionCheck) queryClient.invalidateQueries({ queryKey: getGetSessionQueryKey() });
+    },
+  }),
+  defaultOptions: { queries: { retry: (count, err) => !signedOut(err) && count < 2 } },
+});
+
+/** Everything except the sign-in screen needs a Google sign-in. */
+function SessionGate({ children }: { children: React.ReactNode }) {
+  const { data: session, isLoading } = useGetSession({ query: { queryKey: getGetSessionQueryKey(), staleTime: 60_000 } });
+  if (isLoading) return <div className="h-dvh bg-paper" />;
+  return session ? <>{children}</> : <SignIn />;
+}
 
 /** Edition screens lay themselves out; older screens get the padded column. */
 const EDITION_ROUTES = [/^\/$/, /^\/story\//];
@@ -38,7 +58,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
+          <SessionGate>
+            <Router />
+          </SessionGate>
         </WouterRouter>
         <Toaster />
       </TooltipProvider>

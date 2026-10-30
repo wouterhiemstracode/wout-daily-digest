@@ -44,7 +44,7 @@ export interface ApiLog {
 }
 
 /** Answer /api/* like the real server does, and record what the page sent. */
-export async function mockApi(page: Page, opts: { digest?: Digest | null; connected?: boolean } = {}) {
+export async function mockApi(page: Page, opts: { digest?: Digest | null; connected?: boolean; signedIn?: boolean } = {}) {
   const digest = opts.digest === undefined ? demoDigest() : opts.digest;
   const senders = demoSenderList();
   const log: ApiLog = { feedback: [], senderUpdates: [], syncs: 0, generates: 0 };
@@ -56,6 +56,9 @@ export async function mockApi(page: Page, opts: { digest?: Digest | null; connec
     const method = req.method();
     const json = (body: unknown, status = 200) => route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
 
+    if (opts.signedIn === false && path !== "/healthz") return json({ error: "Sign in required" }, 401);
+    if (path === "/auth/me") return json({ email: "wout@example.com" });
+    if (path === "/auth/signout") return json({ success: true });
     if (path === "/auth/gmail/status") return json({ connected: opts.connected ?? true, email: "wout@example.com" });
     if (path === "/auth/gmail/url") return json({ url: "#" });
     if (path === "/senders" && method === "GET") return json(senders);
