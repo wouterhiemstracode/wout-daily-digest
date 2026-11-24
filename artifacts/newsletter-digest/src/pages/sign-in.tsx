@@ -19,10 +19,11 @@ function Shore() {
       <Reeds className="absolute left-[2%] h-[300px] w-[150px]" style={{ bottom: at(-60) }} />
       <Reeds flip rushes={1} className="absolute left-[11%] h-[170px] w-[90px]" style={{ bottom: at(-50) }} />
       <Reeds rushes={2} className="absolute right-[1%] h-[340px] w-[160px]" style={{ bottom: at(-70) }} />
-      <Bank className="absolute right-[9%] h-[64px] w-[380px]" style={{ bottom: at(-34) }} />
+      <Bank className="absolute right-[-2%] h-[120px] w-[760px]" style={{ bottom: at(-46) }} />
       <Water className="absolute inset-x-0 bottom-0" style={{ height: water }} />
-      <Croc {...PEEK_LOOKS.basker} className="absolute right-[calc(9%+80px)] w-[210px]" style={{ bottom: at(14) }} />
-      <Reeds flip rushes={0} className="absolute right-[calc(9%+340px)] h-[120px] w-[70px]" style={{ bottom: at(-36) }} />
+      {/* The big basking Peek: 3× his old size, sized here rather than by --peek-scale, feet on the island. */}
+      <Croc {...PEEK_LOOKS.basker} className="peek-fixed absolute right-[calc(1%-10px)] w-[630px]" style={{ bottom: at(38) }} />
+      <Reeds flip rushes={0} className="absolute right-[calc(1%+730px)] h-[140px] w-[80px]" style={{ bottom: at(-40) }} />
       <LilyPad flower className="absolute left-[24%] w-24" style={{ bottom: `calc(${water} * 0.55)` }} />
       <LilyPad flip className="absolute left-[38%] w-14" style={{ bottom: `calc(${water} * 0.22)` }} />
       <LilyPad className="absolute right-[36%] w-16" style={{ bottom: `calc(${water} * 0.48)` }} />
