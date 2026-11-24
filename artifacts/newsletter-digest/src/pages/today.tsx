@@ -1,7 +1,7 @@
 import * as React from "react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { format } from "date-fns";
-import { Plus, ArrowRight } from "lucide-react";
+import { Plus } from "lucide-react";
 import {
   useGetLatestDigest,
   useGetStats,
@@ -17,9 +17,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { PhoneDeck } from "@/components/press/phone-deck";
 import { Croc, useCrocProp, useNightEdition } from "@/components/press/croc";
 import { Dragonfly, LilyPad, PEEK_LOOKS, Reeds, Wading, Water } from "@/components/press/habitat";
-import { PressButton, SectionHeader } from "@/components/press/primitives";
+import { PressButton } from "@/components/press/primitives";
 import { SortCard } from "@/components/press/sort-card";
-import { ReadingListItem, SenderRow, SectionTile } from "@/components/press/stories";
 import { flattenStories, greeting, storyHref, uniqueStories, type EditionStory } from "@/lib/press";
 
 type Decision = "up" | "down";
@@ -149,7 +148,7 @@ export default function Today() {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 md:px-12 pt-4 md:pt-10 pb-28 md:pb-16">
+    <div className="max-w-[820px] mx-auto px-4 md:px-12 pt-4 md:pt-10 pb-28 md:pb-16">
       {/* ── Header ─────────────────────────────── */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-10 pt-2 pb-8 md:pb-10">
         <div className="min-w-0">
@@ -211,10 +210,7 @@ export default function Today() {
       )}
 
       {isLoading ? (
-        <div className="grid grid-cols-[minmax(0,1fr)_340px] gap-6">
-          <Skeleton className="h-[560px] rounded-[20px]" />
-          <Skeleton className="h-[560px] rounded-[20px]" />
-        </div>
+        <Skeleton className="h-[560px] rounded-[20px]" />
       ) : !digest || stories.length === 0 ? (
         <div className="py-20 text-center">
           {/* Peek's pond: he leaps out for the first briefing, and dozes in it at night. */}
@@ -248,9 +244,17 @@ export default function Today() {
         </div>
       ) : (
         <>
-          {/* ── Desk + rail ───────────────────────── */}
-          <div className="grid grid-cols-[minmax(0,1fr)_340px] gap-6">
-            <SortCard
+          {/* ── Streak + desk ─────────────────────── */}
+          {streak >= 7 && (
+            <div role="status" className="mb-6 flex items-center gap-4 rounded-[20px] bg-sage-soft px-6 py-4">
+              <Croc mood="proud" className="w-14 shrink-0" />
+              <div>
+                <div className="t-label text-ink">{streak} days in a row</div>
+                <div className="t-caption">You’ve sorted your briefing every day.</div>
+              </div>
+            </div>
+          )}
+          <SortCard
               story={current}
               position={stories.length - queue.length + 1}
               total={stories.length}
@@ -262,85 +266,9 @@ export default function Today() {
               reaction={desk.reaction}
               crocProp={crocProp}
               onStartReading={() => kept[0] && navigate(storyHref(digest.id, kept[0]))}
-              className="min-h-[560px] self-start"
+              className="min-h-[560px]"
             />
 
-            <aside className="space-y-6">
-              {streak >= 7 && (
-                <div className="rounded-[20px] bg-sage-soft p-5 flex items-center gap-4">
-                  <Croc mood="proud" className="w-16 shrink-0" />
-                  <div>
-                    <div className="t-label text-ink">{streak} days in a row</div>
-                    <div className="t-caption">You’ve sorted your briefing every day.</div>
-                  </div>
-                </div>
-              )}
-              <div className="rounded-[20px] bg-ink text-paper p-6">
-                <div className="font-sans text-[13px] font-medium opacity-70">Left to sort</div>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <span className="t-numeral text-[64px] leading-[68px]">{queue.length}</span>
-                  <span className="font-sans text-[14px] opacity-60">of {stories.length}</span>
-                </div>
-                <div className="flex gap-2 mt-4">
-                  <span className="h-7 px-3 rounded-full bg-paper/10 font-sans text-[13px] grid place-items-center"><span><b className="font-semibold tabular-nums">{kept.length}</b> kept</span></span>
-                  <span className="h-7 px-3 rounded-full bg-paper/10 font-sans text-[13px] grid place-items-center"><span><b className="font-semibold tabular-nums">{skipped}</b> skipped</span></span>
-                </div>
-              </div>
-
-              <div className="rounded-[20px] bg-paper-raised p-6">
-                <SectionHeader title="Your reading list" aside={kept.length ? `${kept.length} saved` : undefined} />
-                {kept.length ? (
-                  <div className="mt-3">
-                    {kept.map((s, i) => (
-                      <ReadingListItem key={s.id} story={s} digestId={digest.id} index={i + 1} />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="font-serif text-[16px] leading-[26px] text-ink-2 mt-3">
-                    Nothing saved yet. Keep a story on the card and it lands here for later.
-                  </p>
-                )}
-              </div>
-
-              {bySource.length > 0 && (
-                <div className="rounded-[20px] bg-paper-raised p-6">
-                  <SectionHeader title="Who wrote in" aside={`${bySource.length} ${bySource.length === 1 ? "newsletter" : "newsletters"}`} />
-                  <div className="mt-2">
-                    {bySource.map((r) => (
-                      <SenderRow key={r.name} name={r.name} count={r.count} />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </aside>
-          </div>
-
-          {/* ── Sections ─────────────────────────── */}
-          {sectionsForTiles.length > 0 && (
-            <div className="mt-16">
-              <SectionHeader
-                title="Inside today’s edition"
-                aside={
-                  <Link href={`/digest/${digest.id}`}>
-                    <span className="inline-flex items-center gap-1 font-sans font-medium text-ink hover:text-ink-2 cursor-pointer">
-                      Read the full edition <ArrowRight className="h-3.5 w-3.5" />
-                    </span>
-                  </Link>
-                }
-              />
-              <div className="grid grid-cols-4 gap-4 mt-5">
-                {sectionsForTiles.map((sec) => (
-                  <SectionTile
-                    key={sec.id}
-                    title={sec.title}
-                    sectionType={sec.sectionType}
-                    stories={allStories.filter((s) => s.sectionId === sec.id)}
-                    digestId={digest.id}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
         </>
       )}
     </div>
