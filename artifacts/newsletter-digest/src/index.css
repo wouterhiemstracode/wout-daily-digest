@@ -209,7 +209,13 @@
 }
 
 /* ── Peek, the croc (components/press/croc.tsx) ─────────── */
+/* One knob for Peek's size across the whole app: 1 = as designed, 1.5 = half again as big. */
+:root { --peek-scale: 1.5; }
 .croc { overflow: visible; display: block; }
+/* Peek standing on his own grows with the layout around him; Peek in the water grows up from his waterline.
+   .peek-fixed opts one Peek out (the big basking Peek on sign-in is sized on its own). */
+.croc:not(.hab-wade .croc):not(.peek-fixed) { zoom: var(--peek-scale); }
+.hab-wade { scale: var(--peek-scale); transform-origin: 50% 100%; }
 .croc * { transform-box: fill-box; }
 .croc__skin { fill: var(--sage); }
 .croc__eye { fill: var(--croc-eye, #FFFFFF); }
