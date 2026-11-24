@@ -39,7 +39,7 @@ export default function SignIn() {
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-paper text-ink grid place-items-center px-4 pb-[12vh]">
+    <div className="signin-sunny relative min-h-dvh overflow-hidden bg-paper text-ink grid place-items-center px-4 pb-[12vh]">
       <Shore />
       <main className="relative w-full max-w-[420px] rounded-[20px] bg-paper-raised p-8 text-center" style={{ boxShadow: "var(--overlay-shadow)" }}>
         <Masthead className="inline-block" />
