@@ -206,10 +206,10 @@ export function Croc({
                 )}
                 {prop === "sunglasses" && (
                   <g>
-                    <rect className="croc__shades" x={lx - 16 * s} y={51 - 9 * s} width={32 * s} height={18 * s} rx={8 * s} />
-                    <rect className="croc__shades" x={rx - 16 * s} y={51 - 9 * s} width={32 * s} height={18 * s} rx={8 * s} />
-                    <path className="croc__shades-bridge" d={"M" + (lx + 16 * s) + " 48 L" + (rx - 16 * s) + " 48"} />
-                    <path className="croc__glint" d={"M" + (lx - 10) + " 47 L" + (lx - 2) + " 47"} />
+                    <rect className="croc__shades" x={lx - 22 * s} y={51 - 13 * s} width={44 * s} height={26 * s} rx={11 * s} />
+                    <rect className="croc__shades" x={rx - 22 * s} y={51 - 13 * s} width={44 * s} height={26 * s} rx={11 * s} />
+                    <path className="croc__shades-bridge" d={"M" + (lx - 24 * s) + " 45 L" + (rx + 24 * s) + " 45"} />
+                    <path className="croc__glint" d={"M" + (lx - 15 * s) + " " + (45 - 2 * s) + " L" + (lx - 4 * s) + " " + (45 - 2 * s)} />
                   </g>
                 )}
                 {prop === "nightcap" && (
