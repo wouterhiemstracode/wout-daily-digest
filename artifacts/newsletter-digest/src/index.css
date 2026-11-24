@@ -91,9 +91,9 @@
 
 :root {
   /* Day: cream paper, white and sand cards, charcoal ink, garden green */
-  --paper: #F4EFE6;
-  --paper-raised: #FFFFFF;   /* white card */
-  --paper-sunk: #E8DFCF;     /* sand: wells, hover, avatars */
+  --paper: #E3E5DC;           /* moss */
+  --paper-raised: #F5F6F0;   /* moss card */
+  --paper-sunk: #D1D5C6;     /* stone: wells, hover, avatars */
   --ink: #2A2925;
   --ink-2: #57534B;
   --ink-3: #625D54;
@@ -103,11 +103,11 @@
   --sage-soft: #D7E6CF;
   --danger: #9C4A32;         /* muted terracotta, errors only */
   --positive: #3F6B4E;
-  --side: #1C1B19;
+  --side: #252A22;
   --side-ink: #EEE9DF;
   --side-ink-2: #A39D92;
-  --side-rule: #2F2D29;
-  --side-active: #2A2925;
+  --side-rule: #343B30;
+  --side-active: #31382D;
   /* sections: pastel tint + dark text of the same hue */
   --sec-top: #6B5414;     --sec-top-soft: #F1E5B8;
   --sec-ai: #2F5A35;      --sec-ai-soft: #D7E6CF;
@@ -211,6 +211,8 @@
 /* ── Peek, the croc (components/press/croc.tsx) ─────────── */
 /* One knob for Peek's size across the whole app: 1 = as designed, 1.5 = half again as big. */
 :root { --peek-scale: 1.5; }
+/* Sign-in keeps the warm cream: Peek basks in the sun there. */
+.signin-sunny { --paper: #F4EFE6; --paper-raised: #FFFFFF; --paper-sunk: #E8DFCF; }
 .croc { overflow: visible; display: block; }
 /* Peek standing on his own grows with the layout around him; Peek in the water grows up from his waterline.
    .peek-fixed opts one Peek out (the big basking Peek on sign-in is sized on its own). */
